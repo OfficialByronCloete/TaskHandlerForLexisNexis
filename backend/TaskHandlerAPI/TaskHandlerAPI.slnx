@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Artifacts/">
+    <Project Path="TaskHandlerAPI/TaskHandler.WebAPI.csproj" />
+  </Folder>
+  <Folder Name="/Domain/">
+    <Project Path="TaskHandler.Common/TaskHandler.Common.csproj" />
+    <Project Path="TaskHandler.Core/TaskHandler.Core.csproj" />
+    <Project Path="TaskHandler.Services/TaskHandler.Services.csproj" />
+  </Folder>
+  <Folder Name="/Infrastructure/" />
+  <Folder Name="/Infrastructure/DataAccess/">
+    <Project Path="TaskHandler.Integrations.DataAccess/TaskHandler.Integrations.DataAccess.csproj" />
+  </Folder>
+  <Folder Name="/Tests/" />
+</Solution>

@@ -1,0 +1,36 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+# Builds
+bin/
+obj/
+
+# Visual Studio
+/.vs
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Tests
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+
+# Nuget
+*.nupkg
+*.snupkg
+.nuget/packages/
+
+# Logs
+logs/
+*.log
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
