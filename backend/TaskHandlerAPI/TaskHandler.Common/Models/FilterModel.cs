@@ -5,9 +5,8 @@ namespace TaskHandler.Common.Models
     public class FilterModel
     {
         public string SearchTerm { get; set; } = string.Empty;
-        public SearchOrder Order { get; set; } = SearchOrder.Ascending;
+        public IEnumerable<OrderBy>? OrderBy { get; set; }
         public Priority? Priority { get; set; }
-        public Status? Status { get; set; }
-
+        public IEnumerable<Status>? Statuses { get; set; }
     }
 }

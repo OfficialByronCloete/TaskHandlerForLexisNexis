@@ -10,9 +10,9 @@ import { Task } from '../../models/task.model';
   template: `
     @if (open) {
       <div class="modal-backdrop" (click)="onClose()">
-        <div #modalElement class="modal" (click)="$event.stopPropagation()">
+        <div #modalElement class="modal modal-content" (click)="$event.stopPropagation()">
           <div class="modal-header" (mousedown)="startDrag($event)">
-            <h2>Create Task</h2>
+            <h2>{{ editingTask ? 'Edit Task' : 'Create Task' }}</h2>
             <button class="icon-button" (click)="onClose()" (mousedown)="$event.stopPropagation()">×</button>
           </div>
 
@@ -70,9 +70,11 @@ import { Task } from '../../models/task.model';
           <div class="modal-footer">
             <button class="btn btn-secondary" (click)="onClose()">Cancel</button>
             <button
-              class="btn btn-create"
+              [class.btn-create]="!editingTask"
+              [class.btn-update]="editingTask"
+              class="btn"
               (click)="submit()">
-              {{ loading ? 'Creating...' : 'Create Task' }}
+              {{ loading ? (editingTask ? 'Updating...' : 'Creating...') : (editingTask ? 'Update Task' : 'Create Task') }}
             </button>
           </div>
         </div>
@@ -80,64 +82,16 @@ import { Task } from '../../models/task.model';
     }
   `,
   styles: `
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 1000;
-    }
-
     .modal {
-      position: absolute;
-      width: 100%;
-      max-width: 520px;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
-      border: 1px solid #e2e8f0;
-      overflow: hidden;
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 20px;
-      border-bottom: 1px solid #eef2f7;
-      cursor: move;
-      user-select: none;
-      background: linear-gradient(90deg, #ffffff 0%, #fecdd3 100%);
-    }
-
-    .modal-header h2 {
-      margin: 0;
-      font-size: 18px;
-      color: #0f172a;
-    }
-
-    .icon-button {
-      background: transparent;
-      border: none;
-      font-size: 22px;
-      cursor: pointer;
-      color: #64748b;
+      top: 80px;
+      right: 20px;
+      width: 420px;
+      max-height: 75vh;
     }
 
     .modal-body {
-      padding: 18px 20px;
       display: grid;
-      gap: 14px;
-    }
-
-    .field {
-      display: grid;
-      gap: 6px;
-      font-size: 13px;
-      color: #475569;
-      font-weight: 600;
+      gap: 10px;
     }
 
     .field label {
@@ -156,37 +110,9 @@ import { Task } from '../../models/task.model';
       gap: 8px;
     }
 
-    .field input,
-    .field textarea,
-    .field select {
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 14px;
-      font-family: inherit;
-      outline: none;
-    }
-
-    .field input:focus,
-    .field textarea:focus,
-    .field select:focus {
-      border-color: #0ea5e9;
-      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
-    }
-
-    .input-error {
-      border-color: #fecaca !important;
-      border-width: 2px !important;
-    }
-
-    .required {
-      color: #c8102e;
-      font-weight: 700;
-    }
-
     .field-row {
       display: grid;
-      gap: 12px;
+      gap: 8px;
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -199,39 +125,6 @@ import { Task } from '../../models/task.model';
       font-size: 13px;
       font-weight: 600;
     }
-
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      padding: 16px 20px 20px;
-      border-top: 1px solid #eef2f7;
-    }
-
-    .btn {
-      padding: 8px 16px;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .btn-create {
-      background: #10b981;
-      color: #ffffff;
-      box-shadow: 0 6px 14px rgba(16, 185, 129, 0.25);
-    }
-
-    .btn-create:hover:not(:disabled) {
-      background: #059669;
-    }
-
-    .btn-secondary {
-      background: #e2e8f0;
-      color: #0f172a;
-      box-shadow: none;
-    }
   `,
 })
 export class TaskCreateModalComponent implements OnChanges {
@@ -240,8 +133,10 @@ export class TaskCreateModalComponent implements OnChanges {
   @Input() open = false;
   @Input() loading = false;
   @Input() error: string | null = null;
+  @Input() editingTask: Task | null = null;
   @Output() close = new EventEmitter<void>();
   @Output() submitTask = new EventEmitter<Omit<Task, 'id'>>();
+  @Output() updateTask = new EventEmitter<Task>();
 
   title = '';
   description = '';
@@ -260,7 +155,17 @@ export class TaskCreateModalComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['open']?.currentValue) {
-      this.resetForm();
+      if (this.editingTask) {
+        // Load task data into form for editing
+        this.title = this.editingTask.title;
+        this.description = this.editingTask.description || '';
+        this.status = this.editingTask.status;
+        this.priority = this.editingTask.priority;
+        this.dueDate = this.editingTask.dueDate ? new Date(this.editingTask.dueDate).toISOString().split('T')[0] : '';
+      } else {
+        // Reset form for creating new task
+        this.resetForm();
+      }
       // Reset drag position when modal opens
       this.dragOffsetX = 0;
       this.dragOffsetY = 0;
@@ -313,14 +218,25 @@ export class TaskCreateModalComponent implements OnChanges {
     }
 
     const dueDateValue = this.dueDate.trim();
-    this.submitTask.emit({
+    const taskData = {
       title: this.title.trim(),
       description: this.description.trim() || undefined,
       status: this.status,
       priority: this.priority,
       dueDate: new Date(dueDateValue),
       createdAt: new Date(),
-    });
+    };
+
+    if (this.editingTask) {
+      // Emit update event with full task object including ID
+      this.updateTask.emit({
+        id: this.editingTask.id,
+        ...taskData
+      } as Task);
+    } else {
+      // Emit create event
+      this.submitTask.emit(taskData);
+    }
   }
 
   private resetForm(): void {

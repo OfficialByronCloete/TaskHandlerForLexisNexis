@@ -14,3 +14,275 @@ body {
 	background-size: cover;
 	font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
+
+/* Common Modal Styles */
+.modal-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 999;
+	background: transparent;
+}
+
+.modal-content {
+	position: fixed;
+	background: white;
+	border-radius: 12px;
+	box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+	border: 1px solid #e2e8f0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.modal-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 16px;
+	border-bottom: 1px solid #eef2f7;
+	cursor: move;
+	user-select: none;
+	background: linear-gradient(90deg, #ffffff 0%, #fecdd3 100%);
+	flex-shrink: 0;
+}
+
+.modal-header h2 {
+	margin: 0;
+	font-size: 14px;
+	color: #0f172a;
+	font-weight: 600;
+}
+
+.modal-body {
+	padding: 12px 16px;
+	overflow-y: auto;
+	flex: 1;
+}
+
+.modal-body::-webkit-scrollbar {
+	width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+	background: #cbd5e1;
+	border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+	background: #94a3b8;
+}
+
+.modal-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	padding: 10px 16px;
+	border-top: 1px solid #eef2f7;
+	flex-shrink: 0;
+}
+
+/* Common Button Styles */
+.btn {
+	padding: 6px 12px;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 600;
+	transition: all 0.2s;
+}
+
+.btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.btn-primary {
+	background: #0ea5e9;
+	color: white;
+	border-color: #0ea5e9;
+	box-shadow: 0 6px 14px rgba(14, 165, 233, 0.25);
+}
+
+.btn-primary:hover:not(:disabled) {
+	background: #0284c7;
+}
+
+.btn-secondary {
+	background: #e2e8f0;
+	color: #0f172a;
+	box-shadow: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+	background: #cbd5e1;
+}
+
+.btn-create {
+	background: #10b981;
+	color: #ffffff;
+	box-shadow: 0 6px 14px rgba(16, 185, 129, 0.25);
+}
+
+.btn-create:hover:not(:disabled) {
+	background: #059669;
+}
+
+.btn-update {
+	background: #8b5cf6;
+	color: #ffffff;
+	box-shadow: 0 6px 14px rgba(139, 92, 246, 0.25);
+}
+
+.btn-update:hover:not(:disabled) {
+	background: #7c3aed;
+}
+
+.btn-cancel {
+	padding: 6px 12px;
+	background: #e5e7eb;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 500;
+	color: #374151;
+	transition: background-color 0.2s;
+}
+
+.btn-cancel:hover {
+	background: #d1d5db;
+}
+
+.btn-search {
+	padding: 6px 12px;
+	background: #0ea5e9;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 500;
+	color: white;
+	transition: background-color 0.2s;
+}
+
+.btn-search:hover {
+	background: #0284c7;
+}
+
+.btn-search:active {
+	transform: scale(0.98);
+}
+
+/* Common Form Styles */
+.form-group {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-bottom: 6px;
+}
+
+.field {
+	display: grid;
+	gap: 4px;
+	font-size: 12px;
+	color: #475569;
+	font-weight: 600;
+}
+
+.field input,
+.field textarea,
+.field select {
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	padding: 8px 10px;
+	font-size: 13px;
+	font-family: inherit;
+	outline: none;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+	border-color: #0ea5e9;
+	box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+.input-error {
+	border-color: #fecaca !important;
+	border-width: 2px !important;
+}
+
+.required {
+	color: #c8102e;
+	font-weight: 700;
+}
+
+/* Badge Styles */
+.badge {
+	padding: 6px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.2px;
+}
+
+.badge.new {
+	background: #ecfdf5;
+	color: #047857;
+	border: 1px solid #a7f3d0;
+}
+
+.badge.in-progress {
+	background: #fff7ed;
+	color: #c2410c;
+	border: 1px solid #fed7aa;
+}
+
+.badge.done {
+	background: #eff6ff;
+	color: #1d4ed8;
+	border: 1px solid #bfdbfe;
+}
+
+/* Common Animations */
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.slide-down {
+	animation: slideDown 0.2s ease-out;
+}
+
+/* Close Button */
+.close-btn,
+.icon-button {
+	background: transparent;
+	border: none;
+	font-size: 22px;
+	cursor: pointer;
+	color: #64748b;
+	padding: 0;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: color 0.2s;
+}
+
+.close-btn:hover,
+.icon-button:hover {
+	color: #1f2937;
+}

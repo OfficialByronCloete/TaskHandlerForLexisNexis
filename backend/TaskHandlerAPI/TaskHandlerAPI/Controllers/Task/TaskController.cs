@@ -66,10 +66,6 @@ namespace TaskHandler.WebAPI.Controllers.Task
             if (validationResult is not null)
                 return validationResult;
 
-            // Optional: if you still want to require a term, keep this; otherwise remove it.
-            // if (string.IsNullOrWhiteSpace(request.Filter.SearchTerm))
-            //     return BadRequest("Query cannot be empty.");
-
             var result = await _taskService.SearchTasksAsync(request.Filter, request.Pagination);
             return Ok(result);
         }

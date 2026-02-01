@@ -6,11 +6,12 @@ import { PaginationModel } from '../../models/pagination.model';
 import { FilterModel } from '../../models/filter.model';
 import { TaskCreateModalComponent } from '../task-modal/task-modal.component';
 import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal.component';
+import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/task-delete-confirm-modal.component';
 
 @Component({
   selector: 'app-task-list',
   standalone: true,
-  imports: [CommonModule, TaskCreateModalComponent, TaskFilterModalComponent],
+  imports: [CommonModule, TaskCreateModalComponent, TaskFilterModalComponent, TaskDeleteConfirmModalComponent],
   template: `
     <div class="task-container">
       <div class="header-row">
@@ -32,18 +33,27 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
         } @else {
           <ul class="task-list">
             @for (task of tasks(); track task.id) {
-              <li class="task-item">
+              <li class="task-item" (click)="editTask(task)">
                 <div class="task-content">
                   <h3>{{ task.title }}</h3>
                 </div>
                 <div class="task-status">
-                  @if (task.status == 0) {
-                    <span class="badge new">New</span>
-                  } @else if (task.status == 1) {
-                    <span class="badge in-progress">In Progress</span>
-                  } @else if (task.status == 2) {
-                    <span class="badge done">Done</span>
-                  }
+                  <div class="status-row">
+                    @if (task.status == 0) {
+                      <span class="badge new">New</span>
+                    } @else if (task.status == 1) {
+                      <span class="badge in-progress">In Progress</span>
+                    } @else if (task.status == 2) {
+                      <span class="badge done">Done</span>
+                    }
+                    @if (task.priority === 2) {
+                      <span class="priority-indicator priority-high" title="High priority">▲</span>
+                    } @else if (task.priority === 1) {
+                      <span class="priority-indicator priority-medium" title="Medium priority">▬</span>
+                    } @else if (task.priority === 0) {
+                      <span class="priority-indicator priority-low" title="Low priority">▼</span>
+                    }
+                  </div>
                   @if (task.status != 2 && task.dueDate) {
                     <span class="due-date">Due {{ task.dueDate | date:'mediumDate' }}</span>
                   }
@@ -106,6 +116,7 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
 
     <app-task-filter-modal
       [open]="filterOpen()"
+      [resetTrigger]="filterResetTrigger()"
       (close)="closeFilter()"
       (search)="handleSearch($event)">
     </app-task-filter-modal>
@@ -114,27 +125,18 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
       [open]="createOpen()"
       [loading]="createLoading()"
       [error]="createError()"
+      [editingTask]="editingTask()"
       (close)="closeCreate()"
-      (submitTask)="handleCreate($event)">
+      (submitTask)="handleCreate($event)"
+      (updateTask)="handleUpdate($event)">
     </app-task-create-modal>
 
-    @if (confirmDeleteOpen()) {
-      <div class="modal-overlay" (click)="cancelDelete()">
-        <div class="confirm-modal" (click)="$event.stopPropagation()">
-          <div class="confirm-header">
-            <h2>Delete Task</h2>
-          </div>
-          <div class="confirm-body">
-            <p>Are you sure you want to permanently delete <strong>"{{ taskToDeleteTitle() }}"</strong>?</p>
-            <p class="confirm-warning">This action cannot be undone.</p>
-          </div>
-          <div class="confirm-footer">
-            <button class="btn-cancel" (click)="cancelDelete()">Cancel</button>
-            <button class="btn-delete" (click)="confirmDelete()">Delete</button>
-          </div>
-        </div>
-      </div>
-    }
+    <app-task-delete-confirm-modal
+      [open]="confirmDeleteOpen()"
+      [taskTitle]="taskToDeleteTitle()"
+      (cancel)="cancelDelete()"
+      (confirm)="confirmDelete()">
+    </app-task-delete-confirm-modal>
   `,
   styles: `
     .task-container {
@@ -213,7 +215,13 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
       border: 1px solid #e2e8f0;
       border-radius: 12px;
       background: #ffffff;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+      cursor: pointer;
+    }
+
+    .task-item:hover {
+      background: #f9fafb;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .task-status {
@@ -221,6 +229,40 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
       flex-direction: column;
       align-items: flex-end;
       gap: 6px;
+    }
+
+    .status-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .priority-indicator {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1;
+      padding: 7px 7px;
+      border-radius: 999px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .priority-high {
+      color: #dc2626;
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+
+    .priority-medium {
+      color: #a16207;
+      border-color: #fde68a;
+      background: #fffbeb;
+    }
+
+    .priority-low {
+      color: #2563eb;
+      border-color: #bfdbfe;
+      background: #eff6ff;
     }
 
     .delete-btn {
@@ -248,12 +290,6 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
       transform: scale(0.95);
     }
 
-    .task-item:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
-      border-color: #cbd5f5;
-    }
-
     .task-content h3 {
       margin: 0 0 6px 0;
       color: #0f172a;
@@ -266,32 +302,6 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
       color: #64748b;
       font-size: 14px;
       line-height: 1.4;
-    }
-
-    .badge {
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-    }
-
-    .badge.new {
-      background: #ecfdf5;
-      color: #047857;
-      border: 1px solid #a7f3d0;
-    }
-
-    .badge.in-progress {
-      background: #fff7ed;
-      color: #c2410c;
-      border: 1px solid #fed7aa;
-    }
-
-    .badge.done {
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
     }
 
     .due-date {
@@ -459,118 +469,6 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
       margin-left: 8px;
       white-space: nowrap;
     }
-
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .confirm-modal {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-      width: 90%;
-      max-width: 450px;
-      animation: slideIn 0.2s ease;
-    }
-
-    @keyframes slideIn {
-      from {
-        transform: translateY(-20px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    .confirm-header {
-      padding: 20px;
-      border-bottom: 1px solid #e5e7eb;
-      background: linear-gradient(90deg, #ffffff 0%, #fecdd3 100%);
-      border-radius: 12px 12px 0 0;
-    }
-
-    .confirm-header h2 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    .confirm-body {
-      padding: 24px 20px;
-    }
-
-    .confirm-body p {
-      margin: 0 0 12px 0;
-      font-size: 14px;
-      color: #374151;
-      line-height: 1.5;
-    }
-
-    .confirm-body p:last-child {
-      margin-bottom: 0;
-    }
-
-    .confirm-warning {
-      color: #dc2626;
-      font-weight: 600;
-      font-size: 13px;
-    }
-
-    .confirm-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      padding: 16px 20px;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    .btn-cancel {
-      padding: 8px 16px;
-      background: #e5e7eb;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      color: #374151;
-      transition: background-color 0.2s;
-    }
-
-    .btn-cancel:hover {
-      background: #d1d5db;
-    }
-
-    .btn-delete {
-      padding: 8px 16px;
-      background: #dc2626;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      color: white;
-      transition: background-color 0.2s;
-    }
-
-    .btn-delete:hover {
-      background: #b91c1c;
-    }
-
-    .btn-delete:active {
-      transform: scale(0.98);
-    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -588,10 +486,12 @@ export class TaskListComponent implements OnInit {
   createOpen = signal(false);
   createLoading = signal(false);
   createError = signal<string | null>(null);
+  editingTask = signal<any | null>(null);
   filterOpen = signal(false);
   confirmDeleteOpen = signal(false);
   taskToDeleteId = signal<number | null>(null);
   taskToDeleteTitle = signal<string>('');
+  filterResetTrigger = signal(0);
 
   ngOnInit(): void {
     this.loadTasks();
@@ -696,12 +596,20 @@ export class TaskListComponent implements OnInit {
   }
 
   openCreate(): void {
+    this.editingTask.set(null);
+    this.createError.set(null);
+    this.createOpen.set(true);
+  }
+
+  editTask(task: any): void {
+    this.editingTask.set(task);
     this.createError.set(null);
     this.createOpen.set(true);
   }
 
   closeCreate(): void {
     this.createOpen.set(false);
+    this.editingTask.set(null);
   }
 
   openFilter(): void {
@@ -714,6 +622,7 @@ export class TaskListComponent implements OnInit {
 
   refreshTasks(): void {
     this.activeFilter = null;
+    this.filterResetTrigger.update(v => v + 1);
     this.loadTasks();
   }
 
@@ -735,9 +644,8 @@ export class TaskListComponent implements OnInit {
     return Boolean(
       (filter.SearchTerm ?? '').trim() ||
         (filter.statuses && filter.statuses.length > 0) ||
-        typeof filter.status === 'number' ||
         typeof filter.priority === 'number' ||
-        typeof filter.order === 'number'
+        (filter.orderBy && filter.orderBy.length > 0)
     );
   }
 
@@ -755,6 +663,24 @@ export class TaskListComponent implements OnInit {
       error: (err) => {
         console.error('Error creating task:', err);
         this.createError.set('Failed to create task. Please try again.');
+        this.createLoading.set(false);
+      }
+    });
+  }
+
+  handleUpdate(payload: any): void {
+    this.createLoading.set(true);
+    this.createError.set(null);
+
+    this.taskService.updateTask(payload).subscribe({
+      next: () => {
+        this.createLoading.set(false);
+        this.closeCreate();
+        this.loadTasks();
+      },
+      error: (err) => {
+        console.error('Error updating task:', err);
+        this.createError.set('Failed to update task. Please try again.');
         this.createLoading.set(false);
       }
     });

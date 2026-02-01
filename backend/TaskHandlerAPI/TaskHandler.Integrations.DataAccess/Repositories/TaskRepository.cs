@@ -82,8 +82,8 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
             var query = _context.Tasks.AsQueryable().Where(t => !t.IsDeleted);
 
             // Optional: Status filter
-            if (filter.Status is not null)
-                query = query.Where(t => t.Status == filter.Status);
+            if (filter.Statuses?.Any() == true)
+                query = query.Where(t => filter.Statuses.Contains(t.Status));
 
             // Optional: Priority filter
             if (filter.Priority is not null)
@@ -101,14 +101,34 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
             // Total count BEFORE pagination
             var totalCount = await query.CountAsync();
 
-            // We might want to do different kind of ordering
-            // dueDate (asc, desc)
-            // Title (asc, desc)
-
             // Deterministic ordering BEFORE pagination
-            query = filter.Order == SearchOrder.Descending
-                ? query.OrderByDescending(t => t.DueDate).ThenBy(t => t.Title)
-                : query.OrderBy(t => t.DueDate).ThenBy(t => t.Title);
+            IOrderedQueryable<TaskEntity>? orderedQuery = null;
+
+            if (filter.OrderBy?.Any() == true)
+            {
+                foreach (var order in filter.OrderBy)
+                {
+                    orderedQuery = (orderedQuery, order) switch
+                    {
+                        // Title
+                        (null, OrderBy.TitleAsc) => query.OrderBy(t => t.Title),
+                        (null, OrderBy.TitleDesc) => query.OrderByDescending(t => t.Title),
+                        (not null, OrderBy.TitleAsc) => orderedQuery.ThenBy(t => t.Title),
+                        (not null, OrderBy.TitleDesc) => orderedQuery.ThenByDescending(t => t.Title),
+
+                        // DueDate
+                        (null, OrderBy.DueDateAsc) => query.OrderBy(t => t.DueDate),
+                        (null, OrderBy.DueDateDesc) => query.OrderByDescending(t => t.DueDate),
+                        (not null, OrderBy.DueDateAsc) => orderedQuery.ThenBy(t => t.DueDate),
+                        (not null, OrderBy.DueDateDesc) => orderedQuery.ThenByDescending(t => t.DueDate),
+
+                        _ => orderedQuery
+                    };
+                }
+            }
+
+            query = (orderedQuery ?? query.OrderBy(t => t.Title))
+                .ThenBy(t => t.Id);
 
             var tasks = await query
                 .ApplyPagination(pagination)

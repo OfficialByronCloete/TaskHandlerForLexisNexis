@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal, ViewChild, ElementRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FilterModel } from '../../models/filter.model';
@@ -9,10 +9,10 @@ import { FilterModel } from '../../models/filter.model';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="modal-overlay" *ngIf="open()" (click)="onOverlayClick()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <div class="modal-header">
+      <div #modalElement class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header" (mousedown)="startDrag($event)">
           <h2>Search Tasks</h2>
-          <button class="close-btn" (click)="closeModal()">✕</button>
+          <button class="close-btn" (click)="closeModal()" (mousedown)="$event.stopPropagation()">✕</button>
         </div>
 
         <div class="modal-body">
@@ -45,6 +45,54 @@ import { FilterModel } from '../../models/filter.model';
               </label>
             </div>
           </div>
+
+          <div class="form-group">
+            <span class="section-title">Sort By</span>
+            <div class="sort-controls">
+              <div class="sort-group">
+                <span class="sort-group-label">Title</span>
+                <div class="toggle-buttons">
+                  <button
+                    type="button"
+                    class="toggle-btn"
+                    [class.active]="titleSort() === 'asc'"
+                    (click)="toggleTitleSort('asc'); $event.stopPropagation()"
+                  >
+                    A-Z
+                  </button>
+                  <button
+                    type="button"
+                    class="toggle-btn"
+                    [class.active]="titleSort() === 'desc'"
+                    (click)="toggleTitleSort('desc'); $event.stopPropagation()"
+                  >
+                    Z-A
+                  </button>
+                </div>
+              </div>
+              <div class="sort-group">
+                <span class="sort-group-label">Due Date</span>
+                <div class="toggle-buttons">
+                  <button
+                    type="button"
+                    class="toggle-btn"
+                    [class.active]="dueDateSort() === 'asc'"
+                    (click)="toggleDueDateSort('asc'); $event.stopPropagation()"
+                  >
+                    Earliest
+                  </button>
+                  <button
+                    type="button"
+                    class="toggle-btn"
+                    [class.active]="dueDateSort() === 'desc'"
+                    (click)="toggleDueDateSort('desc'); $event.stopPropagation()"
+                  >
+                    Latest
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -56,81 +104,15 @@ import { FilterModel } from '../../models/filter.model';
   `,
   styles: [`
     .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
+      background: transparent;
     }
 
     .modal-content {
-      background: white;
+      top: 70px;
+      right: 20px;
+      width: 380px;
+      max-height: 80vh;
       border-radius: 8px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-      width: 90%;
-      max-width: 500px;
-      animation: slideIn 0.3s ease;
-    }
-
-    @keyframes slideIn {
-      from {
-        transform: translateY(-30px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid #e5e7eb;
-      background: linear-gradient(90deg, #ffffff 0%, #fecdd3 100%);
-      border-radius: 8px 8px 0 0;
-    }
-
-    .modal-header h2 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    .close-btn {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #6b7280;
-      transition: color 0.2s;
-      padding: 0;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .close-btn:hover {
-      color: #1f2937;
-    }
-
-    .modal-body {
-      padding: 24px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
     }
 
     .section-title {
@@ -159,6 +141,57 @@ import { FilterModel } from '../../models/filter.model';
       accent-color: #0ea5e9;
     }
 
+    .sort-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .sort-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sort-group-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #6b7280;
+      min-width: 70px;
+    }
+
+    .toggle-buttons {
+      display: flex;
+      gap: 4px;
+      background: #f3f4f6;
+      padding: 4px;
+      border-radius: 6px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .toggle-btn:hover {
+      color: #374151;
+    }
+
+    .toggle-btn.active {
+      background: white;
+      color: #0ea5e9;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
     label {
       font-size: 14px;
       font-weight: 500;
@@ -178,54 +211,13 @@ import { FilterModel } from '../../models/filter.model';
       border-color: #0ea5e9;
       box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
     }
-
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      padding: 16px 20px;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    .btn-cancel {
-      padding: 8px 16px;
-      background: #e5e7eb;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      color: #374151;
-      transition: background-color 0.2s;
-    }
-
-    .btn-cancel:hover {
-      background: #d1d5db;
-    }
-
-    .btn-search {
-      padding: 8px 16px;
-      background: #0ea5e9;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      color: white;
-      transition: background-color 0.2s;
-    }
-
-    .btn-search:hover {
-      background: #0284c7;
-    }
-
-    .btn-search:active {
-      transform: scale(0.98);
-    }
   `]
 })
 export class TaskFilterModalComponent {
+  @ViewChild('modalElement', { static: false }) modalElement?: ElementRef<HTMLDivElement>;
+
   open = input<boolean>(false);
+  resetTrigger = input<number>(0);
   close = output<void>();
   search = output<FilterModel>();
 
@@ -236,15 +228,103 @@ export class TaskFilterModalComponent {
   statusNew = false;
   statusInProgress = false;
   statusDone = false;
+  titleSort = signal<'asc' | 'desc' | undefined>(undefined);
+  dueDateSort = signal<'asc' | 'desc' | undefined>(undefined);
+
+  // Drag functionality: track where modal has been dragged to
+  private dragOffsetX = 0;  // How far dragged horizontally
+  private dragOffsetY = 0;  // How far dragged vertically
+  private dragStartMouseX = 0;  // Mouse X position when drag started
+  private dragStartMouseY = 0;  // Mouse Y position when drag started
+
+  constructor() {
+    // Watch for reset trigger changes
+    effect(() => {
+      const trigger = this.resetTrigger();
+      if (trigger > 0) {
+        this.resetFilters();
+      }
+    });
+  }
+
+  private resetFilters(): void {
+    this.filter.SearchTerm = '';
+    this.filter.statuses = [];
+    this.statusNew = false;
+    this.statusInProgress = false;
+    this.statusDone = false;
+    this.titleSort.set(undefined);
+    this.dueDateSort.set(undefined);
+  }
 
   closeModal(): void {
     this.close.emit();
   }
 
+  // Start dragging when user clicks on header
+  startDrag(e: MouseEvent): void {
+    e.preventDefault();
+    
+    // Remember where the mouse started
+    this.dragStartMouseX = e.clientX - this.dragOffsetX;
+    this.dragStartMouseY = e.clientY - this.dragOffsetY;
+
+    // Listen for mouse movement and release
+    document.addEventListener('mousemove', this.onDrag);
+    document.addEventListener('mouseup', this.stopDrag);
+  }
+
+  // Update modal position as mouse moves
+  private onDrag = (e: MouseEvent): void => {
+    if (!this.modalElement) return;
+    
+    e.preventDefault();
+    
+    // Calculate new position based on mouse movement
+    this.dragOffsetX = e.clientX - this.dragStartMouseX;
+    this.dragOffsetY = e.clientY - this.dragStartMouseY;
+
+    // Move the modal
+    this.modalElement.nativeElement.style.transform = 
+      `translate(${this.dragOffsetX}px, ${this.dragOffsetY}px)`;
+  };
+
+  // Stop dragging when mouse is released
+  private stopDrag = (): void => {
+    document.removeEventListener('mousemove', this.onDrag);
+    document.removeEventListener('mouseup', this.stopDrag);
+  };
+
+  toggleTitleSort(direction: 'asc' | 'desc'): void {
+    // If clicking same button, deselect it. Otherwise, switch to new direction.
+    this.titleSort.update(current => current === direction ? undefined : direction);
+  }
+
+  toggleDueDateSort(direction: 'asc' | 'desc'): void {
+    // If clicking same button, deselect it. Otherwise, switch to new direction.
+    this.dueDateSort.update(current => current === direction ? undefined : direction);
+  }
+
   handleSearch(): void {
     const statuses = this.getSelectedStatuses();
     this.filter.statuses = statuses;
-    this.filter.status = statuses.length === 1 ? statuses[0] : undefined;
+    
+    // Map sort selections to orderBy array:
+    // 0 = titleAsc, 1 = titleDesc, 2 = dueDateAsc, 3 = dueDateDesc
+    // Build array with selected sorts
+    const orderByArray: number[] = [];
+    const titleSortValue = this.titleSort();
+    const dueDateSortValue = this.dueDateSort();
+    
+    if (titleSortValue) {
+      orderByArray.push(titleSortValue === 'asc' ? 0 : 1);
+    }
+    if (dueDateSortValue) {
+      orderByArray.push(dueDateSortValue === 'asc' ? 2 : 3);
+    }
+    
+    this.filter.orderBy = orderByArray.length > 0 ? orderByArray : undefined;
+    
     this.search.emit({ ...this.filter });
   }
 
