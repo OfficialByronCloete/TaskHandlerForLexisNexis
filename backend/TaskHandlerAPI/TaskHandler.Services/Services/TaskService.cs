@@ -26,7 +26,15 @@ namespace TaskHandler.Services.Services
         public async Task DeleteTaskAsync(int taskId)
             => await _taskRepository.DeleteTaskAsync(taskId);
 
-        public async Task<List<TaskModel>> SearchTasksAsync(string query, PaginationModel pagination)
-            => await _taskRepository.SearchTasksAsync(query, pagination);
+        public async Task<PagedResult<TaskModel>> SearchTasksAsync(string query, PaginationModel pagination)
+        {
+            var (items, totalCount) = await _taskRepository.SearchTasksAsync(query, pagination);
+
+            return new PagedResult<TaskModel>
+            {
+                Items = items,
+                TotalCount = totalCount
+            };
+        }
     }
 }

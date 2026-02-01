@@ -4,16 +4,21 @@ import { TaskService } from '../../services/task.service';
 import { Task } from '../../models/task.model';
 import { PaginationModel } from '../../models/pagination.model';
 import { TaskCreateModalComponent } from '../task-modal/task-modal.component';
+import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal.component';
 
 @Component({
   selector: 'app-task-list',
   standalone: true,
-  imports: [CommonModule, TaskCreateModalComponent],
+  imports: [CommonModule, TaskCreateModalComponent, TaskFilterModalComponent],
   template: `
     <div class="task-container">
       <div class="header-row">
         <h1>Task Handler</h1>
-        <button class="add-task-btn-icon" (click)="openCreate()" title="Create Task">+</button>
+        <div class="header-actions">
+          <button class="refresh-btn-icon" (click)="refreshTasks()" title="Refresh">⟳</button>
+          <button class="filter-btn-icon" (click)="openFilter()" title="Filters">🔍</button>
+          <button class="add-task-btn-icon" (click)="openCreate()" title="Create Task">+</button>
+        </div>
       </div>
       
       @if (loading()) {
@@ -29,9 +34,6 @@ import { TaskCreateModalComponent } from '../task-modal/task-modal.component';
               <li class="task-item">
                 <div class="task-content">
                   <h3>{{ task.title }}</h3>
-                  @if (task.description) {
-                    <p>{{ task.description }}</p>
-                  }
                 </div>
                 <div class="task-status">
                   @if (task.status == 0) {
@@ -95,6 +97,12 @@ import { TaskCreateModalComponent } from '../task-modal/task-modal.component';
       }
     </div>
 
+    <app-task-filter-modal
+      [open]="filterOpen()"
+      (close)="closeFilter()"
+      (search)="handleSearch($event)">
+    </app-task-filter-modal>
+
     <app-task-create-modal
       [open]="createOpen()"
       [loading]="createLoading()"
@@ -128,6 +136,12 @@ import { TaskCreateModalComponent } from '../task-modal/task-modal.component';
       justify-content: space-between;
       gap: 16px;
       margin-bottom: 18px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
     }
 
     .loading,
@@ -293,26 +307,69 @@ import { TaskCreateModalComponent } from '../task-modal/task-modal.component';
       height: 44px;
       border-radius: 25%;
       border: none;
-      background: #c8102e;
+      background: #10b981;
       color: white;
       font-size: 28px;
       font-weight: 800;
       line-height: 1;
       cursor: pointer;
       transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
-      box-shadow: 0 4px 12px rgba(200, 16, 46, 0.3);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .add-task-btn-icon:hover {
-      background: #a60d25;
+      background: #059669;
       transform: scale(1.05);
-      box-shadow: 0 6px 16px rgba(200, 16, 46, 0.4);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
     }
 
     .add-task-btn-icon:active {
+      transform: scale(0.98);
+    }
+
+    .filter-btn-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 25%;
+      border: none;
+      background: #65cae7;
+      color: white;
+      font-size: 25px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .filter-btn-icon:hover {
+      background: #0284c7;
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4);
+    }
+
+    .filter-btn-icon:active {
+      transform: scale(0.98);
+    }
+
+    .refresh-btn-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 25%;
+      border: none;
+      color: black;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .refresh-btn-icon:active {
       transform: scale(0.98);
     }
 
@@ -341,6 +398,7 @@ import { TaskCreateModalComponent } from '../task-modal/task-modal.component';
 })
 export class TaskListComponent implements OnInit {
   private readonly taskService = inject(TaskService);
+  private activeStatusFilters = new Set<number>();
 
   tasks = signal<Task[]>([]);
   loading = signal(true);
@@ -352,6 +410,7 @@ export class TaskListComponent implements OnInit {
   createOpen = signal(false);
   createLoading = signal(false);
   createError = signal<string | null>(null);
+  filterOpen = signal(false);
 
   ngOnInit(): void {
     this.loadTasks();
@@ -367,7 +426,7 @@ export class TaskListComponent implements OnInit {
     };
     this.taskService.getTasks(pagination).subscribe({
       next: (result) => {
-        this.tasks.set(result.items);
+        this.tasks.set(this.applyStatusFilters(result.items));
         this.totalItems.set(result.totalCount);
         // Calculate exact total pages from totalCount
         const calculatedPages = Math.ceil(result.totalCount / this.pageSize());
@@ -445,7 +504,57 @@ export class TaskListComponent implements OnInit {
     this.createOpen.set(false);
   }
 
-  handleCreate(payload: Omit<Task, 'id'>): void {
+  openFilter(): void {
+    this.filterOpen.set(true);
+  }
+
+  closeFilter(): void {
+    this.filterOpen.set(false);
+  }
+
+  refreshTasks(): void {
+    this.loadTasks();
+  }
+
+  handleSearch(filter: { query: string; statuses: number[] }): void {
+    this.closeFilter();
+    this.currentPage.set(1);
+    this.activeStatusFilters = new Set(filter.statuses);
+
+    if (filter.query.trim()) {
+      const pagination: PaginationModel = {
+        page: this.currentPage(),
+        pageSize: this.pageSize(),
+      };
+      this.loading.set(true);
+      this.taskService.searchTasks(filter.query, pagination).subscribe({
+        next: (result) => {
+          this.tasks.set(this.applyStatusFilters(result.items));
+          this.totalItems.set(result.totalCount);
+          const calculatedPages = Math.ceil(result.totalCount / this.pageSize());
+          this.totalPages.set(calculatedPages > 0 ? calculatedPages : 1);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Error searching tasks:', err);
+          this.error.set('Failed to search tasks. Please try again.');
+          this.loading.set(false);
+        }
+      });
+    } else {
+      this.loadTasks();
+    }
+  }
+
+  private applyStatusFilters(items: Task[]): Task[] {
+    if (this.activeStatusFilters.size === 0) {
+      return items;
+    }
+
+    return items.filter((task) => this.activeStatusFilters.has(task.status));
+  }
+
+  handleCreate(payload: any): void {
     this.createLoading.set(true);
     this.createError.set(null);
 

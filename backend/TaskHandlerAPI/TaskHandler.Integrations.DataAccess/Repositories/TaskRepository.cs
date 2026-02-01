@@ -10,13 +10,13 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
 {
     public class TaskRepository(TaskHandlerContext _context) : ITaskRepository
     {
-        public async Task<(List<TaskModel> Items, int TotalCount)> GetPaginatedListOfTasksAsync(PaginationModel pagination)
+        public async Task<(List<TaskModel> Tasks, int TotalCount)> GetPaginatedListOfTasksAsync(PaginationModel pagination)
         {
-            var baseQuery = _context.Tasks.Where(t => !t.IsDeleted);
+            var query = _context.Tasks.Where(t => !t.IsDeleted);
 
-            var totalCount = await baseQuery.CountAsync();
+            var totalCount = await query.CountAsync();
 
-            var items = await baseQuery
+            var tasks = await query
                 .ApplyPagination(pagination)
                 .Select(t => new TaskModel
                 {
@@ -30,7 +30,7 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
                 })
                 .ToListAsync();
 
-            return (items, totalCount);
+            return (tasks, totalCount);
         }
 
         public async Task CreateTaskAsync(TaskModel task)
@@ -73,18 +73,22 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<TaskModel>> SearchTasksAsync(string query, PaginationModel pagination)
+        public async Task<(List<TaskModel> Tasks, int TotalCount)> SearchTasksAsync(string searchString, PaginationModel pagination)
         {
-            if (string.IsNullOrWhiteSpace(query))
-                return [];
+            if (string.IsNullOrWhiteSpace(searchString))
+                return ([], 0);
 
-            var pattern = $"%{query.Trim()}%";
+            var pattern = $"%{searchString.Trim()}%";
 
-            return await _context.Tasks
+            var filteredQuery = _context.Tasks
                 .Where(t => !t.IsDeleted &&
                             EF.Functions.ILike(
                                 (t.Title ?? string.Empty) + " " + (t.Description ?? string.Empty),
-                                pattern))
+                                pattern));
+
+            var totalCount = await filteredQuery.CountAsync();
+
+            var tasks = await filteredQuery
                 .ApplyPagination(pagination)
                 .Select(t => new TaskModel
                 {
@@ -97,6 +101,8 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
                     CreatedAt = t.CreatedAt
                 })
                 .ToListAsync();
+
+            return (tasks, totalCount);
         }
     }
 }

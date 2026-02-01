@@ -218,14 +218,13 @@ import { Task } from '../../models/task.model';
     }
 
     .btn-create {
-      background: #c8102e;
-      border-color: #c8102e;
+      background: #10b981;
       color: #ffffff;
-      box-shadow: 0 6px 14px rgba(200, 16, 46, 0.25);
+      box-shadow: 0 6px 14px rgba(16, 185, 129, 0.25);
     }
 
     .btn-create:hover:not(:disabled) {
-      background: #a60d25;
+      background: #059669;
     }
 
     .btn-secondary {
