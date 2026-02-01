@@ -6,10 +6,15 @@ namespace TaskHandler.Services.Services
 {
     public class TaskService(ITaskRepository _taskRepository) : ITaskService
     {
-        public async Task<List<TaskModel>> GetPaginatedListOfTasksAsync(PaginationModel pagination)
+        public async Task<PagedResult<TaskModel>> GetPaginatedListOfTasksAsync(PaginationModel pagination)
         {
-            var tasks = await _taskRepository.GetPaginatedListOfTasksAsync(pagination);
-            return tasks;
+            var (items, totalCount) = await _taskRepository.GetPaginatedListOfTasksAsync(pagination);
+
+            return new PagedResult<TaskModel>
+            {
+                Items = items,
+                TotalCount = totalCount
+            };
         }
 
         public async Task CreateTaskAsync(TaskModel task)

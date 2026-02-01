@@ -10,21 +10,28 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
 {
     public class TaskRepository(TaskHandlerContext _context) : ITaskRepository
     {
-        public async Task<List<TaskModel>> GetPaginatedListOfTasksAsync(PaginationModel pagination)
-            => await _context.Tasks
-               .Where(t => !t.IsDeleted)
-               .ApplyPagination(pagination)
-               .Select(t => new TaskModel
-               {
-                   Id = t.Id,
-                   Title = t.Title,
-                   Description = t.Description,
-                   Status = t.Status,
-                   Priority = t.Priority,
-                   DueDate = t.DueDate,
-                   CreatedAt = t.CreatedAt
-               })
-               .ToListAsync();
+        public async Task<(List<TaskModel> Items, int TotalCount)> GetPaginatedListOfTasksAsync(PaginationModel pagination)
+        {
+            var baseQuery = _context.Tasks.Where(t => !t.IsDeleted);
+
+            var totalCount = await baseQuery.CountAsync();
+
+            var items = await baseQuery
+                .ApplyPagination(pagination)
+                .Select(t => new TaskModel
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Description = t.Description,
+                    Status = t.Status,
+                    Priority = t.Priority,
+                    DueDate = t.DueDate,
+                    CreatedAt = t.CreatedAt
+                })
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
 
         public async Task CreateTaskAsync(TaskModel task)
         {
