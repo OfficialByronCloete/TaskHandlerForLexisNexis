@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Task } from '../models/task.model';
-import { PagedResult } from '../models/pagedresult.model';
+import { PagedResultModel } from '../models/paged-result.model';
 import { PaginationModel } from '../models/pagination.model';
+import { FilterModel } from '../models/filter.model';
 
 @Injectable({
   providedIn: 'root',
@@ -14,8 +15,8 @@ export class TaskService {
 
   // what determines the structure of a request and response?
   // I want to pass the pagination model to the backend when fetching tasks
-  getTasks(pagination: PaginationModel): Observable<PagedResult<Task>> {
-    return this.http.post<PagedResult<Task>>(`${this.baseUrl}/GetTasks`, pagination);
+  getTasks(pagination: PaginationModel): Observable<PagedResultModel<Task>> {
+    return this.http.post<PagedResultModel<Task>>(`${this.baseUrl}/GetTasks`, pagination);
   }
 
   // If needed in future
@@ -35,15 +36,10 @@ export class TaskService {
     return this.http.delete<void>(`${this.baseUrl}/DeleteTask/${id}`);
   }
 
-  searchTasks(query: string, pagination: PaginationModel): Observable<PagedResult<Task>> {
-    const params = new HttpParams().set('query', query);
-    return this.http.post<PagedResult<Task>>(
-      `${this.baseUrl}/Search`,
-      {
-        page: pagination.page,
-        pageSize: pagination.pageSize,
-      },
-      { params },
-    );
+  searchTasks(filter: FilterModel, pagination: PaginationModel): Observable<PagedResultModel<Task>> {
+    return this.http.post<PagedResultModel<Task>>(`${this.baseUrl}/Search`, {
+      filter,
+      pagination,
+    });
   }
 }
