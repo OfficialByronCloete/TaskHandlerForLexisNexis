@@ -40,19 +40,19 @@ import { Task } from '../../models/task.model';
             <div class="field-row">
               <label class="field">
                 <span>Status</span>
-                <select name="status" [(ngModel)]="status">
-                  <option [ngValue]="0">New</option>
-                  <option [ngValue]="1">In Progress</option>
-                  <option [ngValue]="2">Done</option>
+                <select name="status" [(ngModel)]="status" (change)="onStatusChange()" class="status-select">
+                  <option [ngValue]="0" data-badge="new">New</option>
+                  <option [ngValue]="1" data-badge="in-progress">In Progress</option>
+                  <option [ngValue]="2" data-badge="done">Done</option>
                 </select>
               </label>
 
               <label class="field">
                 <span>Priority</span>
-                <select name="priority" [(ngModel)]="priority">
-                  <option [ngValue]="0">Low</option>
-                  <option [ngValue]="1">Medium</option>
-                  <option [ngValue]="2">High</option>
+                <select name="priority" [(ngModel)]="priority" (change)="onPriorityChange()" class="priority-select">
+                  <option [ngValue]="0" data-priority="low">Low</option>
+                  <option [ngValue]="1" data-priority="medium">Medium</option>
+                  <option [ngValue]="2" data-priority="high">High</option>
                 </select>
               </label>
             </div>
@@ -92,6 +92,55 @@ import { Task } from '../../models/task.model';
     .modal-body {
       display: grid;
       gap: 10px;
+    }
+
+    .status-select,
+    .priority-select {
+      appearance: none;
+      background-position: right 8px center;
+      background-repeat: no-repeat;
+      background-size: 20px;
+      padding-right: 32px;
+    }
+
+    .status-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23047857' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    }
+
+    .priority-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232563eb' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    }
+
+    /* Status select colors */
+    .status-select.status-new {
+      background-color: #ecfdf5;
+      border-color: #a7f3d0;
+    }
+
+    .status-select.status-in-progress {
+      background-color: #fff7ed;
+      border-color: #fed7aa;
+    }
+
+    .status-select.status-done {
+      background-color: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    /* Priority select colors */
+    .priority-select.priority-low {
+      background-color: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .priority-select.priority-medium {
+      background-color: #fffbeb;
+      border-color: #fde68a;
+    }
+
+    .priority-select.priority-high {
+      background-color: #eff6ff;
+      border-color: #bfdbfe;
     }
 
     .field label {
@@ -169,7 +218,34 @@ export class TaskCreateModalComponent implements OnChanges {
       // Reset drag position when modal opens
       this.dragOffsetX = 0;
       this.dragOffsetY = 0;
+      // Update select colors after modal opens
+      setTimeout(() => this.updateSelectColors(), 0);
     }
+  }
+
+  private updateSelectColors(): void {
+    const statusSelect = document.querySelector('.status-select') as HTMLSelectElement;
+    const prioritySelect = document.querySelector('.priority-select') as HTMLSelectElement;
+
+    if (statusSelect) {
+      statusSelect.className = 'status-select';
+      const statusMap: { [key: number]: string } = { 0: 'status-new', 1: 'status-in-progress', 2: 'status-done' };
+      statusSelect.classList.add(statusMap[this.status] || 'status-new');
+    }
+
+    if (prioritySelect) {
+      prioritySelect.className = 'priority-select';
+      const priorityMap: { [key: number]: string } = { 0: 'priority-low', 1: 'priority-medium', 2: 'priority-high' };
+      prioritySelect.classList.add(priorityMap[this.priority] || 'priority-low');
+    }
+  }
+
+  onStatusChange(): void {
+    this.updateSelectColors();
+  }
+
+  onPriorityChange(): void {
+    this.updateSelectColors();
   }
 
   onClose(): void {

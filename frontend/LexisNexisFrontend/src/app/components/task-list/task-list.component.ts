@@ -13,6 +13,10 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
   standalone: true,
   imports: [CommonModule, TaskCreateModalComponent, TaskFilterModalComponent, TaskDeleteConfirmModalComponent],
   template: `
+    <div class="logo-section">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/b/bf/LexisNexis_logo.svg" alt="LexisNexis Logo" class="logo-img" />
+    </div>
+
     <div class="task-container">
       <div class="header-row">
         <h1>Task Handler</h1>
@@ -58,7 +62,7 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
                     <span class="due-date">Due {{ task.dueDate | date:'mediumDate' }}</span>
                   }
                 </div>
-                <button class="delete-btn" (click)="deleteTask(task.id)" title="Delete task">
+                <button class="delete-btn" (click)="deleteTask(task.id); $event.stopPropagation()" title="Delete task">
                   🗑️
                 </button>
               </li>
@@ -141,12 +145,35 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
   styles: `
     .task-container {
       max-width: 920px;
-      margin: 40px auto;
+      margin: 40px auto 100px auto;
       padding: 28px;
       background: #ffffff;
       border-radius: 16px;
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
       border: 1px solid #eef2f7;
+    }
+
+    .logo-section {
+      max-width: 920px;
+      margin: 30px auto 20px;
+      padding: 0 28px;
+      text-align: center;
+    }
+
+    :host {
+      display: block;
+      padding-bottom: 60px;
+    }
+
+    .logo-img {
+      height: 60px;
+      width: auto;
+      object-fit: contain;
+      transition: filter 0.2s ease;
+    }
+
+    .logo-img:hover {
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
     }
 
     h1 {
@@ -215,13 +242,26 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
       border: 1px solid #e2e8f0;
       border-radius: 12px;
       background: #ffffff;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+      background-size: 200% 100%;
+      background-position: 100% 0;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
       cursor: pointer;
     }
 
     .task-item:hover {
-      background: #f9fafb;
+      animation: fillGradient 0.6s ease forwards;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    @keyframes fillGradient {
+      from {
+        background-image: linear-gradient(135deg, #ffffff 0%, rgba(200, 16, 46, 0.08) 100%);
+        background-position: 100% 0;
+      }
+      to {
+        background-image: linear-gradient(135deg, #ffffff 0%, rgba(200, 16, 46, 0.08) 100%);
+        background-position: 0% 0;
+      }
     }
 
     .task-status {

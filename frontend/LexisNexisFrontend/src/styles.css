@@ -8,7 +8,7 @@ body {
 
 body {
 	margin: 0;
-	background: linear-gradient(200deg, #c8102e -100%, #ffffff 85%);
+	background: linear-gradient(200deg, #c8102e -20%, #ffffff 85%);
 	background-repeat: no-repeat;
 	background-attachment: fixed;
 	background-size: cover;
@@ -42,7 +42,7 @@ body {
 	border-bottom: 1px solid #eef2f7;
 	cursor: move;
 	user-select: none;
-	background: linear-gradient(90deg, #ffffff 0%, #fecdd3 100%);
+	background: linear-gradient(90deg, #ffffff 0%, #fecdd3 50%);
 	flex-shrink: 0;
 }
 
