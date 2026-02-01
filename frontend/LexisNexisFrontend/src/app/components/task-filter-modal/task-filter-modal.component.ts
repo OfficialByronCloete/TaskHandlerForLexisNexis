@@ -1,6 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FilterModel } from '../../models/filter.model';
 
 @Component({
   selector: 'app-task-filter-modal',
@@ -20,7 +21,7 @@ import { FormsModule } from '@angular/forms';
             <input
               id="searchInput"
               type="text"
-              [(ngModel)]="searchQuery"
+              [(ngModel)]="filter.SearchTerm"
               (keyup.enter)="handleSearch()"
               placeholder="Enter search terms..."
               class="search-input"
@@ -226,9 +227,12 @@ import { FormsModule } from '@angular/forms';
 export class TaskFilterModalComponent {
   open = input<boolean>(false);
   close = output<void>();
-  search = output<{ query: string; statuses: number[] }>();
+  search = output<FilterModel>();
 
-  searchQuery = '';
+  filter: FilterModel = {
+    SearchTerm: '',
+    statuses: [],
+  };
   statusNew = false;
   statusInProgress = false;
   statusDone = false;
@@ -238,10 +242,10 @@ export class TaskFilterModalComponent {
   }
 
   handleSearch(): void {
-    this.search.emit({
-      query: this.searchQuery,
-      statuses: this.getSelectedStatuses(),
-    });
+    const statuses = this.getSelectedStatuses();
+    this.filter.statuses = statuses;
+    this.filter.status = statuses.length === 1 ? statuses[0] : undefined;
+    this.search.emit({ ...this.filter });
   }
 
   private getSelectedStatuses(): number[] {

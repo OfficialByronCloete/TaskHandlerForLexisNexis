@@ -17,6 +17,7 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
             var totalCount = await query.CountAsync();
 
             var tasks = await query
+                .OrderBy(t => t.DueDate)
                 .ApplyPagination(pagination)
                 .Select(t => new TaskModel
                 {
@@ -73,22 +74,42 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<(List<TaskModel> Tasks, int TotalCount)> SearchTasksAsync(string searchString, PaginationModel pagination)
+        public async Task<(List<TaskModel> Tasks, int TotalCount)> SearchTasksAsync(FilterModel filter, PaginationModel pagination)
         {
-            if (string.IsNullOrWhiteSpace(searchString))
-                return ([], 0);
+            ArgumentNullException.ThrowIfNull(filter);
 
-            var pattern = $"%{searchString.Trim()}%";
+            var query = _context.Tasks.AsQueryable().Where(t => !t.IsDeleted);
 
-            var filteredQuery = _context.Tasks
-                .Where(t => !t.IsDeleted &&
-                            EF.Functions.ILike(
-                                (t.Title ?? string.Empty) + " " + (t.Description ?? string.Empty),
-                                pattern));
+            // Optional: Status filter
+            if (filter.Status is not null)
+                query = query.Where(t => t.Status == filter.Status);
 
-            var totalCount = await filteredQuery.CountAsync();
+            // Optional: Priority filter
+            if (filter.Priority is not null)
+                query = query.Where(t => t.Priority == filter.Priority);
 
-            var tasks = await filteredQuery
+            // Optional: Search term filter
+            if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+            {
+                var pattern = $"%{filter.SearchTerm.Trim()}%";
+                query = query.Where(t => EF.Functions.ILike(
+                    (t.Title ?? string.Empty) + " " + (t.Description ?? string.Empty),
+                    pattern));
+            }
+
+            // Total count BEFORE pagination
+            var totalCount = await query.CountAsync();
+
+            // We might want to do different kind of ordering
+            // createdat (asc, desc)
+            // Title (asc, desc)
+
+            // Deterministic ordering BEFORE pagination
+            query = filter.Order == TaskHandler.Common.Enums.SearchOrder.Descending
+                ? query.OrderByDescending(t => t.Title).ThenByDescending(t => t.Id)
+                : query.OrderBy(t => t.Title).ThenBy(t => t.Id);
+
+            var tasks = await query
                 .ApplyPagination(pagination)
                 .Select(t => new TaskModel
                 {

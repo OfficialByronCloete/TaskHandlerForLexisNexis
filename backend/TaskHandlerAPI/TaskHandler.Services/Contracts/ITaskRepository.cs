@@ -9,6 +9,6 @@ namespace TaskHandler.Services.Contracts
         Task CreateTaskAsync(TaskModel task);
         Task UpdateTaskAsync(TaskModel updatedTask);
         Task DeleteTaskAsync(int taskId);
-        Task<(List<TaskModel> Tasks, int TotalCount)> SearchTasksAsync(string searchString, PaginationModel pagination);
+        Task<(List<TaskModel> Tasks, int TotalCount)> SearchTasksAsync(FilterModel filter, PaginationModel pagination);
     }
 }

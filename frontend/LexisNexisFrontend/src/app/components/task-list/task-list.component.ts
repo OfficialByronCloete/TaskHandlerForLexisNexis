@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TaskService } from '../../services/task.service';
 import { Task } from '../../models/task.model';
 import { PaginationModel } from '../../models/pagination.model';
+import { FilterModel } from '../../models/filter.model';
 import { TaskCreateModalComponent } from '../task-modal/task-modal.component';
 import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal.component';
 
@@ -42,6 +43,9 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
                     <span class="badge in-progress">In Progress</span>
                   } @else if (task.status == 2) {
                     <span class="badge done">Done</span>
+                  }
+                  @if (task.status != 2 && task.dueDate) {
+                    <span class="due-date">Due {{ task.dueDate | date:'mediumDate' }}</span>
                   }
                 </div>
               </li>
@@ -182,12 +186,19 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
     .task-item {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       padding: 16px 18px;
       border: 1px solid #e2e8f0;
       border-radius: 12px;
       background: #ffffff;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .task-status {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
     }
 
     .task-item:hover {
@@ -234,6 +245,14 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
       background: #eff6ff;
       color: #1d4ed8;
       border: 1px solid #bfdbfe;
+    }
+
+    .due-date {
+      display: block;
+      margin-top: 15px;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
     }
 
     .pagination {
@@ -513,21 +532,22 @@ export class TaskListComponent implements OnInit {
   }
 
   refreshTasks(): void {
+    this.activeStatusFilters.clear();
     this.loadTasks();
   }
 
-  handleSearch(filter: { query: string; statuses: number[] }): void {
+  handleSearch(filter: FilterModel): void {
     this.closeFilter();
     this.currentPage.set(1);
-    this.activeStatusFilters = new Set(filter.statuses);
+    this.activeStatusFilters = new Set(this.getStatusFilters(filter));
 
-    if (filter.query.trim()) {
+    if (this.hasAnyFilter(filter)) {
       const pagination: PaginationModel = {
         page: this.currentPage(),
         pageSize: this.pageSize(),
       };
       this.loading.set(true);
-      this.taskService.searchTasks(filter.query, pagination).subscribe({
+      this.taskService.searchTasks(filter, pagination).subscribe({
         next: (result) => {
           this.tasks.set(this.applyStatusFilters(result.items));
           this.totalItems.set(result.totalCount);
@@ -544,6 +564,28 @@ export class TaskListComponent implements OnInit {
     } else {
       this.loadTasks();
     }
+  }
+
+  private hasAnyFilter(filter: FilterModel): boolean {
+    return Boolean(
+      (filter.SearchTerm ?? '').trim() ||
+        (filter.statuses && filter.statuses.length > 0) ||
+        typeof filter.status === 'number' ||
+        typeof filter.priority === 'number' ||
+        typeof filter.order === 'number'
+    );
+  }
+
+  private getStatusFilters(filter: FilterModel): number[] {
+    if (filter.statuses && filter.statuses.length > 0) {
+      return filter.statuses;
+    }
+
+    if (typeof filter.status === 'number') {
+      return [filter.status];
+    }
+
+    return [];
   }
 
   private applyStatusFilters(items: Task[]): Task[] {

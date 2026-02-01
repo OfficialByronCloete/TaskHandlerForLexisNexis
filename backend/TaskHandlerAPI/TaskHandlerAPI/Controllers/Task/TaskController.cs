@@ -57,17 +57,21 @@ namespace TaskHandler.WebAPI.Controllers.Task
         }
 
         [HttpPost("Search", Name = "SearchTasks")]
-        public async Task<IActionResult> SearchTasksAsync([FromQuery] string query, [FromBody] PaginationModel pagination)
+        public async Task<IActionResult> SearchTasksAsync([FromBody] SearchTasksRequest request)
         {
-            if (string.IsNullOrWhiteSpace(query))
-                return BadRequest("Query cannot be empty.");
+            if (request is null)
+                return BadRequest("Request payload is required.");
 
-            var validationResult = ValidatePagination(pagination);
+            var validationResult = ValidatePagination(request.Pagination);
             if (validationResult is not null)
                 return validationResult;
 
-            var tasks = await _taskService.SearchTasksAsync(query, pagination);
-            return Ok(tasks);
+            // Optional: if you still want to require a term, keep this; otherwise remove it.
+            // if (string.IsNullOrWhiteSpace(request.Filter.SearchTerm))
+            //     return BadRequest("Query cannot be empty.");
+
+            var result = await _taskService.SearchTasksAsync(request.Filter, request.Pagination);
+            return Ok(result);
         }
 
         // Returns null when the pagination is valid; returns a BadRequest IActionResult when invalid.
