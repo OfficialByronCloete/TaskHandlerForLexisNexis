@@ -48,6 +48,9 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
                     <span class="due-date">Due {{ task.dueDate | date:'mediumDate' }}</span>
                   }
                 </div>
+                <button class="delete-btn" (click)="deleteTask(task.id)" title="Delete task">
+                  🗑️
+                </button>
               </li>
             }
           </ul>
@@ -114,6 +117,24 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
       (close)="closeCreate()"
       (submitTask)="handleCreate($event)">
     </app-task-create-modal>
+
+    @if (confirmDeleteOpen()) {
+      <div class="modal-overlay" (click)="cancelDelete()">
+        <div class="confirm-modal" (click)="$event.stopPropagation()">
+          <div class="confirm-header">
+            <h2>Delete Task</h2>
+          </div>
+          <div class="confirm-body">
+            <p>Are you sure you want to permanently delete <strong>"{{ taskToDeleteTitle() }}"</strong>?</p>
+            <p class="confirm-warning">This action cannot be undone.</p>
+          </div>
+          <div class="confirm-footer">
+            <button class="btn-cancel" (click)="cancelDelete()">Cancel</button>
+            <button class="btn-delete" (click)="confirmDelete()">Delete</button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: `
     .task-container {
@@ -184,8 +205,9 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
     }
 
     .task-item {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 16px;
       align-items: flex-start;
       padding: 16px 18px;
       border: 1px solid #e2e8f0;
@@ -199,6 +221,31 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
       flex-direction: column;
       align-items: flex-end;
       gap: 6px;
+    }
+
+    .delete-btn {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background-color 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.6;
+      height: fit-content;
+    }
+
+    .delete-btn:hover {
+      background: #fee2e2;
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .delete-btn:active {
+      transform: scale(0.95);
     }
 
     .task-item:hover {
@@ -412,12 +459,124 @@ import { TaskFilterModalComponent } from '../task-filter-modal/task-filter-modal
       margin-left: 8px;
       white-space: nowrap;
     }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .confirm-modal {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      width: 90%;
+      max-width: 450px;
+      animation: slideIn 0.2s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .confirm-header {
+      padding: 20px;
+      border-bottom: 1px solid #e5e7eb;
+      background: linear-gradient(90deg, #ffffff 0%, #fecdd3 100%);
+      border-radius: 12px 12px 0 0;
+    }
+
+    .confirm-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .confirm-body {
+      padding: 24px 20px;
+    }
+
+    .confirm-body p {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .confirm-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .confirm-warning {
+      color: #dc2626;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .confirm-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .btn-cancel {
+      padding: 8px 16px;
+      background: #e5e7eb;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      transition: background-color 0.2s;
+    }
+
+    .btn-cancel:hover {
+      background: #d1d5db;
+    }
+
+    .btn-delete {
+      padding: 8px 16px;
+      background: #dc2626;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+      transition: background-color 0.2s;
+    }
+
+    .btn-delete:hover {
+      background: #b91c1c;
+    }
+
+    .btn-delete:active {
+      transform: scale(0.98);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TaskListComponent implements OnInit {
   private readonly taskService = inject(TaskService);
-  private activeStatusFilters = new Set<number>();
+  private activeFilter: FilterModel | null = null;
 
   tasks = signal<Task[]>([]);
   loading = signal(true);
@@ -430,6 +589,9 @@ export class TaskListComponent implements OnInit {
   createLoading = signal(false);
   createError = signal<string | null>(null);
   filterOpen = signal(false);
+  confirmDeleteOpen = signal(false);
+  taskToDeleteId = signal<number | null>(null);
+  taskToDeleteTitle = signal<string>('');
 
   ngOnInit(): void {
     this.loadTasks();
@@ -443,21 +605,40 @@ export class TaskListComponent implements OnInit {
       page: this.currentPage(),
       pageSize: this.pageSize(),
     };
-    this.taskService.getTasks(pagination).subscribe({
-      next: (result) => {
-        this.tasks.set(this.applyStatusFilters(result.items));
-        this.totalItems.set(result.totalCount);
-        // Calculate exact total pages from totalCount
-        const calculatedPages = Math.ceil(result.totalCount / this.pageSize());
-        this.totalPages.set(calculatedPages > 0 ? calculatedPages : 1);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error('Error loading tasks:', err);
-        this.error.set('Failed to load tasks. Please try again later.');
-        this.loading.set(false);
-      }
-    });
+
+    // If we have an active filter, use search endpoint instead
+    if (this.activeFilter && this.hasAnyFilter(this.activeFilter)) {
+      this.taskService.searchTasks(this.activeFilter, pagination).subscribe({
+        next: (result) => {
+          this.tasks.set(result.items);
+          this.totalItems.set(result.totalCount);
+          const calculatedPages = Math.ceil(result.totalCount / this.pageSize());
+          this.totalPages.set(calculatedPages > 0 ? calculatedPages : 1);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Error loading tasks:', err);
+          this.error.set('Failed to load tasks. Please try again later.');
+          this.loading.set(false);
+        }
+      });
+    } else {
+      this.taskService.getTasks(pagination).subscribe({
+        next: (result) => {
+          this.tasks.set(result.items);
+          this.totalItems.set(result.totalCount);
+          // Calculate exact total pages from totalCount
+          const calculatedPages = Math.ceil(result.totalCount / this.pageSize());
+          this.totalPages.set(calculatedPages > 0 ? calculatedPages : 1);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Error loading tasks:', err);
+          this.error.set('Failed to load tasks. Please try again later.');
+          this.loading.set(false);
+        }
+      });
+    }
   }
 
   nextPage(): void {
@@ -532,38 +713,22 @@ export class TaskListComponent implements OnInit {
   }
 
   refreshTasks(): void {
-    this.activeStatusFilters.clear();
+    this.activeFilter = null;
     this.loadTasks();
   }
 
   handleSearch(filter: FilterModel): void {
     this.closeFilter();
     this.currentPage.set(1);
-    this.activeStatusFilters = new Set(this.getStatusFilters(filter));
-
+    
+    // Store the active filter for pagination
     if (this.hasAnyFilter(filter)) {
-      const pagination: PaginationModel = {
-        page: this.currentPage(),
-        pageSize: this.pageSize(),
-      };
-      this.loading.set(true);
-      this.taskService.searchTasks(filter, pagination).subscribe({
-        next: (result) => {
-          this.tasks.set(this.applyStatusFilters(result.items));
-          this.totalItems.set(result.totalCount);
-          const calculatedPages = Math.ceil(result.totalCount / this.pageSize());
-          this.totalPages.set(calculatedPages > 0 ? calculatedPages : 1);
-          this.loading.set(false);
-        },
-        error: (err) => {
-          console.error('Error searching tasks:', err);
-          this.error.set('Failed to search tasks. Please try again.');
-          this.loading.set(false);
-        }
-      });
+      this.activeFilter = filter;
     } else {
-      this.loadTasks();
+      this.activeFilter = null;
     }
+    
+    this.loadTasks();
   }
 
   private hasAnyFilter(filter: FilterModel): boolean {
@@ -574,26 +739,6 @@ export class TaskListComponent implements OnInit {
         typeof filter.priority === 'number' ||
         typeof filter.order === 'number'
     );
-  }
-
-  private getStatusFilters(filter: FilterModel): number[] {
-    if (filter.statuses && filter.statuses.length > 0) {
-      return filter.statuses;
-    }
-
-    if (typeof filter.status === 'number') {
-      return [filter.status];
-    }
-
-    return [];
-  }
-
-  private applyStatusFilters(items: Task[]): Task[] {
-    if (this.activeStatusFilters.size === 0) {
-      return items;
-    }
-
-    return items.filter((task) => this.activeStatusFilters.has(task.status));
   }
 
   handleCreate(payload: any): void {
@@ -611,6 +756,38 @@ export class TaskListComponent implements OnInit {
         console.error('Error creating task:', err);
         this.createError.set('Failed to create task. Please try again.');
         this.createLoading.set(false);
+      }
+    });
+  }
+
+  deleteTask(id: number): void {
+    const task = this.tasks().find(t => t.id === id);
+    const taskTitle = task?.title || 'this task';
+    
+    this.taskToDeleteId.set(id);
+    this.taskToDeleteTitle.set(taskTitle);
+    this.confirmDeleteOpen.set(true);
+  }
+
+  cancelDelete(): void {
+    this.confirmDeleteOpen.set(false);
+    this.taskToDeleteId.set(null);
+    this.taskToDeleteTitle.set('');
+  }
+
+  confirmDelete(): void {
+    const id = this.taskToDeleteId();
+    if (id === null) return;
+
+    this.taskService.deleteTask(id).subscribe({
+      next: () => {
+        this.cancelDelete();
+        this.loadTasks();
+      },
+      error: (err) => {
+        console.error('Error deleting task:', err);
+        this.error.set('Failed to delete task. Please try again.');
+        this.cancelDelete();
       }
     });
   }

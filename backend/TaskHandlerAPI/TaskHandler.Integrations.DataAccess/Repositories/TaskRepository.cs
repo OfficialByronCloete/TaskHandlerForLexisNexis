@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TaskHandler.Common.Enums;
 using TaskHandler.Common.Models;
 using TaskHandler.Core.Models;
 using TaskHandler.Integrations.DataAccess.Contexts;
@@ -101,13 +102,13 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
             var totalCount = await query.CountAsync();
 
             // We might want to do different kind of ordering
-            // createdat (asc, desc)
+            // dueDate (asc, desc)
             // Title (asc, desc)
 
             // Deterministic ordering BEFORE pagination
-            query = filter.Order == TaskHandler.Common.Enums.SearchOrder.Descending
-                ? query.OrderByDescending(t => t.Title).ThenByDescending(t => t.Id)
-                : query.OrderBy(t => t.Title).ThenBy(t => t.Id);
+            query = filter.Order == SearchOrder.Descending
+                ? query.OrderByDescending(t => t.DueDate).ThenBy(t => t.Title)
+                : query.OrderBy(t => t.DueDate).ThenBy(t => t.Title);
 
             var tasks = await query
                 .ApplyPagination(pagination)

@@ -42,7 +42,7 @@ namespace TaskHandler.WebAPI.Controllers.Task
             }
         }
 
-        [HttpDelete("{id}", Name = "DeleteTask")]
+        [HttpDelete("DeleteTask/{id}", Name = "DeleteTask")]
         public async Task<IActionResult> DeleteTaskAsync(int id)
         {
             try
