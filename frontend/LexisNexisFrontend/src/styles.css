@@ -1,1 +1,16 @@
 /* You can add global styles to this file, and also import other style files */
+
+html,
+body {
+	height: 100%;
+	min-height: 100vh;
+}
+
+body {
+	margin: 0;
+	background: linear-gradient(200deg, #c8102e -100%, #ffffff 85%);
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+	background-size: cover;
+	font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}

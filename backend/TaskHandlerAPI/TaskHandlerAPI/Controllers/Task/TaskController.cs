@@ -71,12 +71,12 @@ namespace TaskHandler.WebAPI.Controllers.Task
         }
 
         // Returns null when the pagination is valid; returns a BadRequest IActionResult when invalid.
-        private IActionResult? ValidatePagination(PaginationModel? pagination)
+        private BadRequestObjectResult? ValidatePagination(PaginationModel? pagination)
         {
             if (pagination is null)
                 return BadRequest("Pagination payload is required.");
 
-            if (pagination.PageNumber <= 0 || pagination.PageSize <= 0)
+            if (pagination.Page <= 0 || pagination.PageSize <= 0)
                 return BadRequest("PageNumber and PageSize must be greater than zero.");
 
             if (pagination.PageSize > 100)

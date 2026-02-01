@@ -5,9 +5,23 @@ using TaskHandler.WebAPI.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
-// Add services to the container.
+// Services
 services.AddControllers();
-// Ensure API explorer and Swagger generator are registered so UseSwagger/UseSwaggerUI are available.
+
+services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+services.ConfigureCustomDependencyInjection(builder);
+
+// OpenAPI/Swagger
+// (Pick one approach long-term; keeping both as-is, just ordered sensibly.)
 services.AddEndpointsApiExplorer();
 services.AddSwaggerGen(c =>
 {
@@ -17,22 +31,20 @@ services.AddSwaggerGen(c =>
         Version = "v1"
     });
 });
-services.ConfigureCustomDependencyInjection(builder);
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 services.AddOpenApi();
 
 var app = builder.Build();
 
+// Startup tasks
 app.Services.ApplyTaskHandlerMigrations();
 
-// Configure the HTTP request pipeline.
+// Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-// Enable swagger UI in all environments
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -40,6 +52,8 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseHttpsRedirection();
+
+app.UseCors();
 
 app.UseAuthorization();
 

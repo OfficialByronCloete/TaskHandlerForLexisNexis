@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using TaskHandler.Common.Models;
+﻿using TaskHandler.Common.Models;
 
 namespace TaskHandler.Integrations.DataAccess.Extensions
 {
@@ -9,9 +6,11 @@ namespace TaskHandler.Integrations.DataAccess.Extensions
     {
         public static IQueryable<T> ApplyPagination<T>(this IQueryable<T> query, PaginationModel paginationModel)
         {
-            if (paginationModel.PageNumber < 1) paginationModel.PageNumber = 1;
-            if (paginationModel.PageSize < 1) paginationModel.PageSize = 10;
-            return query.Skip((paginationModel.PageNumber - 1) * paginationModel.PageSize).Take(paginationModel.PageSize);
+            var pageNumber = paginationModel.Page < 1 ? 1 : paginationModel.Page;
+            var pageSize = paginationModel.PageSize < 1 ? 10 : paginationModel.PageSize;
+            return query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize);
         }
     }
 }
