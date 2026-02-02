@@ -1,6 +1,7 @@
 ﻿using AutoFixture;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using TaskHandler.Common.Models;
 using TaskHandler.Core.Models;
 using TaskHandler.Services.Contracts;
 using TaskHandler.WebAPI.Controllers.Task;
@@ -90,6 +91,83 @@ namespace TaskHandler.WebAPI.Test.Controllers.Task
             // Assert
             Assert.IsInstanceOfType<OkResult>(result);
             _taskServiceMock.VerifyAll();
+        }
+
+        [TestMethod]
+        public async System.Threading.Tasks.Task GetPaginatedListOfTasksAsync_WhenPaginationIsValid_ReturnsOkWithPagedResult()
+        {
+            // Arrange
+            var pagination = new PaginationModel { Page = 1, PageSize = 10 };
+
+            var expected = new PagedResult<TaskModel>
+            {
+                Items = new[]
+                {
+                    new TaskModel { Title = "T1", Description = "D1" },
+                    new TaskModel { Title = "T2", Description = "D2" }
+                },
+                TotalCount = 2
+            };
+
+            _taskServiceMock
+                .Setup(s => s.GetPaginatedListOfTasksAsync(pagination))
+                .ReturnsAsync(expected);
+
+            // Act
+            var result = await _sut.GetPaginatedListOfTasksAsync(pagination);
+
+            // Assert
+            var ok = result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreSame(expected, ok.Value);
+            _taskServiceMock.VerifyAll();
+        }
+
+        [TestMethod]
+        public async System.Threading.Tasks.Task GetPaginatedListOfTasksAsync_WhenPaginationIsNull_ReturnsBadRequest()
+        {
+            // Arrange
+
+            // Act
+            var result = await _sut.GetPaginatedListOfTasksAsync(null!);
+
+            // Assert
+            var badRequest = result as BadRequestObjectResult;
+            Assert.IsNotNull(badRequest);
+            Assert.AreEqual("Pagination payload is required.", badRequest.Value);
+            _taskServiceMock.VerifyNoOtherCalls();
+        }
+
+        [TestMethod]
+        public async System.Threading.Tasks.Task GetPaginatedListOfTasksAsync_WhenPageOrPageSizeIsInvalid_ReturnsBadRequest()
+        {
+            // Arrange
+            var pagination = new PaginationModel { Page = 0, PageSize = 10 };
+
+            // Act
+            var result = await _sut.GetPaginatedListOfTasksAsync(pagination);
+
+            // Assert
+            var badRequest = result as BadRequestObjectResult;
+            Assert.IsNotNull(badRequest);
+            Assert.AreEqual("PageNumber and PageSize must be greater than zero.", badRequest.Value);
+            _taskServiceMock.VerifyNoOtherCalls();
+        }
+
+        [TestMethod]
+        public async System.Threading.Tasks.Task GetPaginatedListOfTasksAsync_WhenPageSizeIsTooLarge_ReturnsBadRequest()
+        {
+            // Arrange
+            var pagination = new PaginationModel { Page = 1, PageSize = 101 };
+
+            // Act
+            var result = await _sut.GetPaginatedListOfTasksAsync(pagination);
+
+            // Assert
+            var badRequest = result as BadRequestObjectResult;
+            Assert.IsNotNull(badRequest);
+            Assert.AreEqual("PageSize cannot be greater than 100.", badRequest.Value);
+            _taskServiceMock.VerifyNoOtherCalls();
         }
     }
 }
