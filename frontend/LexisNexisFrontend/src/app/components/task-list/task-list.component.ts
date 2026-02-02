@@ -170,6 +170,7 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
     <app-task-delete-confirm-modal
       [open]="confirmDeleteOpen()"
       [taskTitle]="taskToDeleteTitle()"
+      [errorMessage]="deleteError()"
       (cancel)="cancelDelete()"
       (confirm)="confirmDelete()">
     </app-task-delete-confirm-modal>
@@ -679,6 +680,7 @@ export class TaskListComponent implements OnInit {
   confirmDeleteOpen = signal(false);
   taskToDeleteId = signal<number | null>(null);
   taskToDeleteTitle = signal<string>('');
+  deleteError = signal<string>('');
   filterResetTrigger = signal(0);
   expandedTaskIds = signal<Set<number>>(new Set());
 
@@ -895,6 +897,7 @@ export class TaskListComponent implements OnInit {
     
     this.taskToDeleteId.set(id);
     this.taskToDeleteTitle.set(taskTitle);
+    this.deleteError.set('');
     this.confirmDeleteOpen.set(true);
   }
 
@@ -902,6 +905,7 @@ export class TaskListComponent implements OnInit {
     this.confirmDeleteOpen.set(false);
     this.taskToDeleteId.set(null);
     this.taskToDeleteTitle.set('');
+    this.deleteError.set('');
   }
 
   confirmDelete(): void {
@@ -915,8 +919,10 @@ export class TaskListComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error deleting task:', err);
-        this.error.set('Failed to delete task. Please try again.');
-        this.cancelDelete();
+        const message = err.error?.title
+          ? `${err.error.title} Could not delete the task.`
+          : 'Failed to delete task. Please try again.';
+        this.deleteError.set(message);
       }
     });
   }

@@ -15,6 +15,9 @@ import { CommonModule } from '@angular/common';
           <div class="confirm-body">
             <p>Are you sure you want to permanently delete <strong>"{{ taskTitle() }}"</strong>?</p>
             <p class="confirm-warning">This action cannot be undone.</p>
+            @if (errorMessage()) {
+              <div class="confirm-error">{{ errorMessage() }}</div>
+            }
           </div>
           <div class="confirm-footer">
             <button class="btn-cancel" (click)="onCancel()">Cancel</button>
@@ -93,6 +96,17 @@ import { CommonModule } from '@angular/common';
       font-size: 13px;
     }
 
+    .confirm-error {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
     .confirm-footer {
       display: flex;
       justify-content: flex-end;
@@ -141,6 +155,7 @@ import { CommonModule } from '@angular/common';
 export class TaskDeleteConfirmModalComponent {
   open = input<boolean>(false);
   taskTitle = input<string>('');
+  errorMessage = input<string>('');
   cancel = output<void>();
   confirm = output<void>();
 
