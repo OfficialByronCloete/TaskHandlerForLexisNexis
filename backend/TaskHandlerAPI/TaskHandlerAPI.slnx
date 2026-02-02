@@ -12,4 +12,7 @@
     <Project Path="TaskHandler.Integrations.DataAccess/TaskHandler.Integrations.DataAccess.csproj" />
   </Folder>
   <Folder Name="/Tests/" />
+  <Folder Name="/Tests/Artefacts/">
+    <Project Path="TaskHandler.WebAPI.Test/TaskHandler.WebAPI.Test.csproj" Id="f7622330-1e45-4942-bf56-2b5c57a649ed" />
+  </Folder>
 </Solution>
