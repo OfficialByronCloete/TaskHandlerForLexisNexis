@@ -31,29 +31,15 @@ namespace TaskHandler.WebAPI.Controllers.Task
         [HttpPost("UpdateTask", Name = "UpdateTask")]
         public async Task<IActionResult> UpdateTaskAsync([FromBody] TaskModel updatedTask)
         {
-            try
-            {
-                await _taskService.UpdateTaskAsync(updatedTask);
-                return Ok();
-            }
-            catch (InvalidOperationException)
-            {
-                return NotFound($"Task with ID {updatedTask.Id} not found.");
-            }
+            await _taskService.UpdateTaskAsync(updatedTask);
+            return Ok();
         }
 
         [HttpDelete("DeleteTask/{id}", Name = "DeleteTask")]
         public async Task<IActionResult> DeleteTaskAsync(int id)
         {
-            try
-            {
-                await _taskService.DeleteTaskAsync(id);
-                return Ok();
-            }
-            catch (InvalidOperationException)
-            {
-                return NotFound($"Task with ID {id} not found.");
-            }
+            await _taskService.DeleteTaskAsync(id);
+            return Ok();
         }
 
         [HttpPost("Search", Name = "SearchTasks")]

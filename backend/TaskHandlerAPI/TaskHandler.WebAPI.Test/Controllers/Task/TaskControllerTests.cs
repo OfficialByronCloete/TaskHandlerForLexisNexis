@@ -47,7 +47,7 @@ namespace TaskHandler.WebAPI.Test.Controllers.Task
         }
 
         [TestMethod]
-        public async System.Threading.Tasks.Task DeleteTaskAsync_WhenServiceThrowsInvalidOperationException_ReturnsNotFound()
+        public async System.Threading.Tasks.Task DeleteTaskAsync_WhenServiceThrowsInvalidOperationException_Throws()
         {
             // Arrange
             var id = _fixture.Create<int>();
@@ -57,10 +57,20 @@ namespace TaskHandler.WebAPI.Test.Controllers.Task
                 .ThrowsAsync(new InvalidOperationException("not found"));
 
             // Act
-            var result = await _sut.DeleteTaskAsync(id);
+            InvalidOperationException ex;
+            try
+            {
+                await _sut.DeleteTaskAsync(id);
+                Assert.Fail("Expected InvalidOperationException to be thrown.");
+                return;
+            }
+            catch (InvalidOperationException caught)
+            {
+                ex = caught;
+            }
 
             // Assert
-            Assert.IsInstanceOfType<NotFoundObjectResult>(result);
+            Assert.AreEqual("not found", ex.Message);
             _taskServiceMock.VerifyAll();
         }
 
