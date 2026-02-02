@@ -1,11 +1,37 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using TaskHandler.Integrations.DataAccess.Contexts;
 using TaskHandler.Integrations.DataAccess.Extensions;
 using TaskHandler.WebAPI.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Console logging + reduce noise
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
+// Keep your app logs visible
+builder.Logging.SetMinimumLevel(LogLevel.Information);
+
+// Cut common noise
+builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
+
+// Allow request logs (our middleware)
+builder.Logging.AddFilter("TaskHandler.WebAPI.RequestLogging", LogLevel.Information);
+
 var services = builder.Services;
 
-// Services
+var provider = builder.Configuration["Database:Provider"];
+
+services.AddDbContext<TaskHandlerContext>(options =>
+{
+    if (string.Equals(provider, "InMemory", StringComparison.OrdinalIgnoreCase))
+        options.UseInMemoryDatabase("TaskHandlerDb");
+    else
+        options.UseNpgsql(builder.Configuration.GetConnectionString("TaskHandler"));
+});
+
 services.AddControllers();
 
 services.AddCors(options =>
@@ -21,7 +47,6 @@ services.AddCors(options =>
 services.ConfigureCustomDependencyInjection(builder);
 
 // OpenAPI/Swagger
-// (Pick one approach long-term; keeping both as-is, just ordered sensibly.)
 services.AddEndpointsApiExplorer();
 services.AddSwaggerGen(c =>
 {
@@ -36,14 +61,42 @@ services.AddOpenApi();
 
 var app = builder.Build();
 
-// Startup tasks
-app.Services.ApplyTaskHandlerMigrations();
+app.UseGlobalExceptionHandling();
 
-// Middleware pipeline
-if (app.Environment.IsDevelopment())
+// Single-line request logging (readable)
+app.Use(async (context, next) =>
 {
+    var logger = context.RequestServices
+        .GetRequiredService<ILoggerFactory>()
+        .CreateLogger("TaskHandler.WebAPI.RequestLogging");
+
+    var sw = System.Diagnostics.Stopwatch.StartNew();
+    try
+    {
+        await next();
+    }
+    finally
+    {
+        sw.Stop();
+
+        var method = context.Request.Method;
+        var path = context.Request.Path.Value ?? "/";
+        var query = context.Request.QueryString.HasValue ? context.Request.QueryString.Value : "";
+        var status = context.Response.StatusCode;
+
+        logger.LogInformation("{Method} {Path}{Query} -> {StatusCode} ({ElapsedMs} ms)",
+            method, path, query, status, sw.ElapsedMilliseconds);
+    }
+});
+
+// Only run migrations for relational providers (InMemory doesn't support migrations)
+if (!string.Equals(provider, "InMemory", StringComparison.OrdinalIgnoreCase))
+    app.Services.ApplyTaskHandlerMigrations();
+
+await app.Services.SeedTaskHandlerDataAsync();
+
+if (app.Environment.IsDevelopment())
     app.MapOpenApi();
-}
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
@@ -52,11 +105,7 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseHttpsRedirection();
-
 app.UseCors();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();

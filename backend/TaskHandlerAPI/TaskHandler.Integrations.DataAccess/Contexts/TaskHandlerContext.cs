@@ -14,8 +14,6 @@ namespace TaskHandler.Integrations.DataAccess.Contexts
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
-                optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=devdb;Username=devuser;Password=devpass;");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
