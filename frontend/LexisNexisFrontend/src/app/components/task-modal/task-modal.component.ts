@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Task } from '../../models/task.model';
+import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.component';
 
 @Component({
   selector: 'app-task-create-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RichTextEditorComponent],
   template: `
     @if (open) {
       <div class="modal-backdrop" (click)="onClose()">
@@ -28,14 +29,13 @@ import { Task } from '../../models/task.model';
                 placeholder="Enter task title" />
             </label>
 
-            <label class="field">
+            <div class="field">
               <span>Description</span>
-              <textarea
-                rows="3"
+              <app-rich-text-editor
                 name="description"
-                [(ngModel)]="description"
-                placeholder="Optional description"></textarea>
-            </label>
+                [(ngModel)]="description">
+              </app-rich-text-editor>
+            </div>
 
             <div class="field-row">
               <label class="field">
@@ -104,33 +104,33 @@ import { Task } from '../../models/task.model';
     }
 
     .status-select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23047857' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 9L1 4h10z'/%3E%3C/svg%3E");
     }
 
     .priority-select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232563eb' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 9L1 4h10z'/%3E%3C/svg%3E");
     }
 
     /* Status select colors */
     .status-select.status-new {
-      background-color: #ecfdf5;
-      border-color: #a7f3d0;
-    }
-
-    .status-select.status-in-progress {
-      background-color: #fff7ed;
-      border-color: #fed7aa;
-    }
-
-    .status-select.status-done {
       background-color: #eff6ff;
       border-color: #bfdbfe;
     }
 
+    .status-select.status-in-progress {
+      background-color: #fffbeb;
+      border-color: #fde68a;
+    }
+
+    .status-select.status-done {
+      background-color: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
     /* Priority select colors */
     .priority-select.priority-low {
-      background-color: #fef2f2;
-      border-color: #fecaca;
+      background-color: #eff6ff;
+      border-color: #bfdbfe;
     }
 
     .priority-select.priority-medium {
@@ -139,8 +139,15 @@ import { Task } from '../../models/task.model';
     }
 
     .priority-select.priority-high {
-      background-color: #eff6ff;
-      border-color: #bfdbfe;
+      background-color: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    /* Make dropdown options white */
+    .status-select option,
+    .priority-select option {
+      background-color: white;
+      color: #334155;
     }
 
     .field label {

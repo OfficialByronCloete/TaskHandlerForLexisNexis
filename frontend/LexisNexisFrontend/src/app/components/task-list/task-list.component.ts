@@ -37,29 +37,61 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
         } @else {
           <ul class="task-list">
             @for (task of tasks(); track task.id) {
-              <li class="task-item" (click)="editTask(task)">
+              <li [class.expanded]="isTaskExpanded(task.id)" class="task-item" (click)="editTask(task)">
+                @if (task.description) {
+                  <button class="expand-btn" (click)="toggleExpand(task.id); $event.stopPropagation()" [attr.title]="isTaskExpanded(task.id) ? 'Collapse' : 'Expand'">
+                    {{ isTaskExpanded(task.id) ? '▼' : '▶' }}
+                  </button>
+                } @else {
+                  <div class="expand-spacer"></div>
+                }
                 <div class="task-content">
                   <h3>{{ task.title }}</h3>
+                  @if (isTaskExpanded(task.id) && task.description) {
+                    <div class="task-description" [innerHTML]="task.description"></div>
+                  }
                 </div>
-                <div class="task-status">
-                  <div class="status-row">
-                    @if (task.status == 0) {
-                      <span class="badge new">New</span>
-                    } @else if (task.status == 1) {
-                      <span class="badge in-progress">In Progress</span>
-                    } @else if (task.status == 2) {
-                      <span class="badge done">Done</span>
-                    }
-                    @if (task.priority === 2) {
-                      <span class="priority-indicator priority-high" title="High priority">▲</span>
-                    } @else if (task.priority === 1) {
-                      <span class="priority-indicator priority-medium" title="Medium priority">▬</span>
-                    } @else if (task.priority === 0) {
-                      <span class="priority-indicator priority-low" title="Low priority">▼</span>
-                    }
-                  </div>
+                <div class="task-status" (click)="$event.stopPropagation()">
+                  @if (isTaskExpanded(task.id)) {
+                    <div class="status-row">
+                      @if (task.status == 0) {
+                        <span class="badge new">New Task</span>
+                      } @else if (task.status == 1) {
+                        <span class="badge in-progress">In Progress</span>
+                      } @else if (task.status == 2) {
+                        <span class="badge done">Done</span>
+                      }
+                      @if (task.priority === 2) {
+                        <span class="priority-indicator priority-high">High Priority</span>
+                      } @else if (task.priority === 1) {
+                        <span class="priority-indicator priority-medium">Medium Priority</span>
+                      } @else if (task.priority === 0) {
+                        <span class="priority-indicator priority-low">Low Priority</span>
+                      }
+                    </div>
+                  } @else {
+                    <div class="status-row">
+                      @if (task.status == 0) {
+                        <span class="badge new">New</span>
+                      } @else if (task.status == 1) {
+                        <span class="badge in-progress">In Progress</span>
+                      } @else if (task.status == 2) {
+                        <span class="badge done">Done</span>
+                      }
+                      @if (task.priority === 2) {
+                        <span class="priority-icon priority-high">▲</span>
+                      } @else if (task.priority === 1) {
+                        <span class="priority-icon priority-medium">▬</span>
+                      } @else if (task.priority === 0) {
+                        <span class="priority-icon priority-low">▼</span>
+                      }
+                    </div>
+                  }
                   @if (task.status != 2 && task.dueDate) {
                     <span class="due-date">Due {{ task.dueDate | date:'mediumDate' }}</span>
+                  }
+                  @if (isTaskExpanded(task.id)) {
+                    <span class="created-date">Created {{ task.createdAt | date:'mediumDate' }}</span>
                   }
                 </div>
                 <button class="delete-btn" (click)="deleteTask(task.id); $event.stopPropagation()" title="Delete task">
@@ -235,7 +267,7 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
 
     .task-item {
       display: grid;
-      grid-template-columns: 1fr auto auto;
+      grid-template-columns: auto 1fr auto auto;
       gap: 16px;
       align-items: flex-start;
       padding: 16px 18px;
@@ -245,12 +277,44 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
       background-size: 200% 100%;
       background-position: 100% 0;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .task-item.expanded {
+      background-image: linear-gradient(135deg, #ffffff 0%, rgba(200, 16, 46, 0.08) 100%);
+      background-position: 0% 0;
+    }
+
+    .expand-btn {
+      flex-shrink: 0;
+      width: 28px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-size: 14px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+      margin-top: 4px;
+    }
+
+    .expand-btn:hover {
+      background-color: #f1f5f9;
+      color: #334155;
+    }
+
+    .expand-spacer {
+      width: 28px;
+      height: 28px;
     }
 
     .task-item:hover {
       animation: fillGradient 0.6s ease forwards;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
     }
 
     @keyframes fillGradient {
@@ -271,6 +335,23 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
       gap: 6px;
     }
 
+    .task-content {
+      flex: 1;
+    }
+
+    .task-description {
+      margin-top: 12px;
+      padding: 12px;
+      background-color: #f8fafc;
+      border-left: 3px solid #0284c7;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #475569;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
     .status-row {
       display: inline-flex;
       align-items: center;
@@ -278,6 +359,17 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
     }
 
     .priority-indicator {
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.4;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    .priority-icon {
       font-size: 16px;
       font-weight: 700;
       line-height: 1;
@@ -285,6 +377,27 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
       border-radius: 999px;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .priority-icon.priority-high {
+      color: #dc2626;
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+
+    .priority-icon.priority-medium {
+      color: #a16207;
+      border-color: #fde68a;
+      background: #fffbeb;
+    }
+
+    .priority-icon.priority-low {
+      color: #2563eb;
+      border-color: #bfdbfe;
+      background: #eff6ff;
     }
 
     .priority-high {
@@ -303,6 +416,33 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
       color: #2563eb;
       border-color: #bfdbfe;
       background: #eff6ff;
+    }
+
+    .badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .badge.new {
+      color: #2563eb;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+    }
+
+    .badge.in-progress {
+      color: #a16207;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+    }
+
+    .badge.done {
+      color: #16a34a;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
     }
 
     .delete-btn {
@@ -347,6 +487,14 @@ import { TaskDeleteConfirmModalComponent } from '../task-delete-confirm-modal/ta
     .due-date {
       display: block;
       margin-top: 15px;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .created-date {
+      display: block;
+      margin-top: 6px;
       font-size: 12px;
       color: #64748b;
       font-weight: 600;
@@ -532,9 +680,24 @@ export class TaskListComponent implements OnInit {
   taskToDeleteId = signal<number | null>(null);
   taskToDeleteTitle = signal<string>('');
   filterResetTrigger = signal(0);
+  expandedTaskIds = signal<Set<number>>(new Set());
 
   ngOnInit(): void {
     this.loadTasks();
+  }
+
+  toggleExpand(taskId: number): void {
+    const expanded = new Set(this.expandedTaskIds());
+    if (expanded.has(taskId)) {
+      expanded.delete(taskId);
+    } else {
+      expanded.add(taskId);
+    }
+    this.expandedTaskIds.set(expanded);
+  }
+
+  isTaskExpanded(taskId: number): boolean {
+    return this.expandedTaskIds().has(taskId);
   }
 
   private loadTasks(): void {

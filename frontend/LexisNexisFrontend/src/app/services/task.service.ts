@@ -5,13 +5,14 @@ import { Task } from '../models/task.model';
 import { PagedResultModel } from '../models/paged-result.model';
 import { PaginationModel } from '../models/pagination.model';
 import { FilterModel } from '../models/filter.model';
+import { environment } from '../../environments/environment'; 
 
 @Injectable({
   providedIn: 'root',
 })
 export class TaskService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'https://localhost:7065/api/Task'; // Base URL for the API
+  private readonly baseUrl = environment.apiUrl; // Base URL for the API
 
   // what determines the structure of a request and response?
   // I want to pass the pagination model to the backend when fetching tasks
