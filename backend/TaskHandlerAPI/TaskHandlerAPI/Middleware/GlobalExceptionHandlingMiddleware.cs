@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Text.Json;
+using TaskHandler.Common.Exceptions;
 
 namespace TaskHandler.WebAPI.Middleware
 {
@@ -32,6 +33,7 @@ namespace TaskHandler.WebAPI.Middleware
 
             var (statusCode, title) = exception switch
             {
+                NotFoundException => (StatusCodes.Status404NotFound, "Resource not found."),
                 InvalidOperationException => (StatusCodes.Status404NotFound, "Resource not found."),
                 ArgumentException => (StatusCodes.Status400BadRequest, "Invalid request."),
                 _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")

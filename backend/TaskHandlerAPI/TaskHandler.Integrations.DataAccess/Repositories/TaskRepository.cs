@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TaskHandler.Common.Enums;
+using TaskHandler.Common.Exceptions;
 using TaskHandler.Common.Models;
 using TaskHandler.Core.Models;
 using TaskHandler.Integrations.DataAccess.Contexts;
@@ -55,7 +56,7 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
         {
             var originalTask = await _context.Tasks
                 .FirstOrDefaultAsync(t => t.Id == updatedTask.Id && !t.IsDeleted)
-                ?? throw new InvalidOperationException(); // Handle not found case
+                ?? throw new NotFoundException($"Task with ID {updatedTask.Id} not found.");
 
             originalTask.ApplyTaskUpdates(updatedTask);
             if (!_context.ChangeTracker.HasChanges())
@@ -68,7 +69,7 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
         {
             var taskEntity = await _context.Tasks
                 .FirstOrDefaultAsync(t => t.Id == taskId && !t.IsDeleted)
-                ?? throw new InvalidOperationException(); // Handle not found case
+                ?? throw new NotFoundException($"Task with ID {taskId} not found.");
 
             taskEntity.IsDeleted = true;
 
