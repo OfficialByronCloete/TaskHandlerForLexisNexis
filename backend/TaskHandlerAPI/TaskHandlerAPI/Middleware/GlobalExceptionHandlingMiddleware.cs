@@ -33,8 +33,8 @@ namespace TaskHandler.WebAPI.Middleware
 
             var (statusCode, title) = exception switch
             {
-                NotFoundException => (StatusCodes.Status404NotFound, "Resource not found."),
-                InvalidOperationException => (StatusCodes.Status404NotFound, "Resource not found."),
+                NotFoundException => (StatusCodes.Status404NotFound, "Task not found."),
+                InvalidOperationException => (StatusCodes.Status404NotFound, "Task not found."),
                 ArgumentException => (StatusCodes.Status400BadRequest, "Invalid request."),
                 _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
             };
