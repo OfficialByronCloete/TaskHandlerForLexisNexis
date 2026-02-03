@@ -12,7 +12,7 @@ import { environment } from '../../environments/environment';
 })
 export class TaskService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = environment.apiUrl; // Base URL for the API
+  private readonly baseUrl = environment.taskHandlerApiBaseUrl; // Base URL for the Task API
 
   // what determines the structure of a request and response?
   // I want to pass the pagination model to the backend when fetching tasks

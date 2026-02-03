@@ -93,10 +93,30 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
             // Optional: Search term filter
             if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
             {
-                var pattern = $"%{filter.SearchTerm.Trim()}%";
-                query = query.Where(t => EF.Functions.ILike(
-                    (t.Title ?? string.Empty) + " " + (t.Description ?? string.Empty),
-                    pattern));
+                var term = filter.SearchTerm.Trim();
+
+                // Provider-aware search (PostgreSQL supports ILIKE; InMemory/others do not)
+                var provider = _context.Database.ProviderName ?? string.Empty;
+                var isPostgres = provider.Contains("Npgsql", StringComparison.OrdinalIgnoreCase);
+
+                if (isPostgres)
+                {
+                    var pattern = $"%{term}%";
+                    query = query.Where(t => EF.Functions.ILike(
+                        (t.Title ?? string.Empty) + " " + (t.Description ?? string.Empty),
+                        pattern));
+                }
+                else
+                {
+                    // Cross-provider fallback:
+                    // - Works for InMemory
+                    // - Translates for most relational providers
+                    var normalized = term.ToUpper();
+
+                    query = query.Where(t =>
+                        (((t.Title ?? string.Empty) + " " + (t.Description ?? string.Empty))
+                            .Contains(normalized, StringComparison.CurrentCultureIgnoreCase)));
+                }
             }
 
             // Total count BEFORE pagination
