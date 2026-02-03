@@ -244,7 +244,6 @@ Trade-offs:
 - **Real-time Updates**: WebSocket support for multi-user scenarios
 - **Attachments**: File upload support for tasks
 - **Comments**: Task commenting and collaboration features
-- **Analytics**: Dashboard with task statistics and charts
 - **Notifications**: Email/push notifications for due dates
 - **Drag & Drop**: Reorder tasks or change status via drag & drop
 
