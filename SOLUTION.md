@@ -68,7 +68,7 @@ TaskHandler is a full-stack task management application designed with a clean se
 
 **Trade-offs:**
 - ✅ Pros: Native framework feature, no external dependencies, improved change detection
-- ⚠️ Cons: Newer API (Angular 16+), team learning curve
+- ⚠️ Cons: Newer API (Angular 16+)
 
 #### Rich Text Editor
 **Decision:** Implemented a custom rich-text editor using `contenteditable` and `document.execCommand`.
@@ -132,7 +132,7 @@ TaskHandler is a full-stack task management application designed with a clean se
 **Rationale:**
 - Standardized error format
 - Better client-side error handling
-- Includes trace IDs for debugging
+
 
 **Trade-offs:**
 - ✅ Pros: Industry standard, consistent structure, helpful for debugging
@@ -156,6 +156,18 @@ TaskHandler is a full-stack task management application designed with a clean se
     "Provider": "InMemory"
   }
 ```
+
+#### Provider-Aware Search Behavior
+**Decision:** Implement provider-aware text search in the repository layer.
+
+**Rationale:**
+- `EF.Functions.ILike(...)` is PostgreSQL-specific (Npgsql).
+- The application supports multiple providers (default InMemory, optional PostgreSQL), so search must adapt at runtime.
+
+**Implementation Notes:**
+- Detect provider via `DbContext.Database.ProviderName`.
+- If provider contains `Npgsql`, use `EF.Functions.ILike(...)`.
+- Otherwise, fall back to a cross-provider expression (e.g., normalized `ToUpper().Contains(...)`) that works for InMemory and translates for most relational providers.
 
 ### 4. Testing Strategy
 
