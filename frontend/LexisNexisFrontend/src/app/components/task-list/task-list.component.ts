@@ -849,7 +849,7 @@ export class TaskListComponent implements OnInit {
     return Boolean(
       (filter.SearchTerm ?? '').trim() ||
         (filter.statuses && filter.statuses.length > 0) ||
-        typeof filter.priority === 'number' ||
+        (filter.priorities && filter.priorities.length > 0) ||
         (filter.orderBy && filter.orderBy.length > 0)
     );
   }

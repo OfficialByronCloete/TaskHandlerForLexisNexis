@@ -28,21 +28,41 @@ import { FilterModel } from '../../models/filter.model';
             />
           </div>
 
-          <div class="form-group">
-            <span class="section-title">Status</span>
-            <div class="checkbox-group">
-              <label class="checkbox-option">
-                <input type="checkbox" [(ngModel)]="statusNew" />
-                <span>New</span>
-              </label>
-              <label class="checkbox-option">
-                <input type="checkbox" [(ngModel)]="statusInProgress" />
-                <span>In Progress</span>
-              </label>
-              <label class="checkbox-option">
-                <input type="checkbox" [(ngModel)]="statusDone" />
-                <span>Done</span>
-              </label>
+          <div class="outer-group">
+            <div class="form-group">
+              <span class="section-title">Status</span>
+              <div class="checkbox-group">
+                <label class="checkbox-option">
+                  <input type="checkbox" [(ngModel)]="statusNew" />
+                  <span>New</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" [(ngModel)]="statusInProgress" />
+                  <span>In Progress</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" [(ngModel)]="statusDone" />
+                  <span>Done</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <span class="section-title">Priority</span>
+              <div class="checkbox-group">
+                <label class="checkbox-option">
+                  <input type="checkbox" [(ngModel)]="priorityLow" />
+                  <span>Low</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" [(ngModel)]="priorityMedium" />
+                  <span>Medium</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" [(ngModel)]="priorityHigh" />
+                  <span>High</span>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -141,6 +161,17 @@ import { FilterModel } from '../../models/filter.model';
       accent-color: #0ea5e9;
     }
 
+    .outer-group {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .outer-group .form-group {
+      flex: 1;
+    }
+
     .sort-controls {
       display: flex;
       flex-direction: column;
@@ -224,7 +255,11 @@ export class TaskFilterModalComponent {
   filter: FilterModel = {
     SearchTerm: '',
     statuses: [],
+    priorities: [],
   };
+  priorityLow = false;
+  priorityMedium = false;
+  priorityHigh = false;
   statusNew = false;
   statusInProgress = false;
   statusDone = false;
@@ -250,6 +285,10 @@ export class TaskFilterModalComponent {
   private resetFilters(): void {
     this.filter.SearchTerm = '';
     this.filter.statuses = [];
+    this.filter.priorities = [];
+    this.priorityLow = false;
+    this.priorityMedium = false;
+    this.priorityHigh = false;
     this.statusNew = false;
     this.statusInProgress = false;
     this.statusDone = false;
@@ -307,7 +346,9 @@ export class TaskFilterModalComponent {
 
   handleSearch(): void {
     const statuses = this.getSelectedStatuses();
+    const priorities = this.getSelectedPriorities();
     this.filter.statuses = statuses;
+    this.filter.priorities = priorities;
     
     // Map sort selections to orderBy array:
     // 0 = titleAsc, 1 = titleDesc, 2 = dueDateAsc, 3 = dueDateDesc
@@ -340,6 +381,15 @@ export class TaskFilterModalComponent {
       statuses.push(2);
     }
     return statuses;
+  }
+
+  private getSelectedPriorities(): number[] 
+  {
+    const priorities: number[] = []; 
+    if (this.priorityLow) { priorities.push(0); } 
+    if (this.priorityMedium) { priorities.push(1); } 
+    if (this.priorityHigh) { priorities.push(2); }
+    return priorities;
   }
 
   onOverlayClick(): void {

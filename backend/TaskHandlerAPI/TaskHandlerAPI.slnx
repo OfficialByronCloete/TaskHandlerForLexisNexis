@@ -15,4 +15,7 @@
   <Folder Name="/Tests/Artefacts/">
     <Project Path="TaskHandler.WebAPI.Test/TaskHandler.WebAPI.Test.csproj" Id="f7622330-1e45-4942-bf56-2b5c57a649ed" />
   </Folder>
+  <Folder Name="/Tests/Domain/">
+    <Project Path="TaskHandler.Services.Test/TaskHandler.Services.Test.csproj" Id="1ba2a434-9efe-4e41-a0e5-80de9f2f5377" />
+  </Folder>
 </Solution>

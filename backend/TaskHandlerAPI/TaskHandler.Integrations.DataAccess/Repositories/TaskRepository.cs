@@ -87,8 +87,8 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
                 query = query.Where(t => filter.Statuses.Contains(t.Status));
 
             // Optional: Priority filter
-            if (filter.Priority is not null)
-                query = query.Where(t => t.Priority == filter.Priority);
+            if (filter.Priorities is not null)
+                query = query.Where(t => filter.Priorities.Contains(t.Priority));
 
             // Optional: Search term filter
             if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
@@ -119,7 +119,7 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
                 }
             }
 
-            // Total count BEFORE pagination
+            // Total count BEFORE pagination and orderingto ensure correct total count for the filtered results
             var totalCount = await query.CountAsync();
 
             // Deterministic ordering BEFORE pagination
@@ -148,6 +148,8 @@ namespace TaskHandler.Integrations.DataAccess.Repositories
                 }
             }
 
+            // If no specific ordering was applied, order in alphabetical order by Title,
+            // with the tie-breaker of Id to ensure deterministic results across pages
             query = (orderedQuery ?? query.OrderBy(t => t.Title))
                 .ThenBy(t => t.Id);
 

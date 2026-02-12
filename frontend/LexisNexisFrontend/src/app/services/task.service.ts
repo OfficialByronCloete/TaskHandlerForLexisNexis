@@ -14,16 +14,9 @@ export class TaskService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.taskHandlerApiBaseUrl; // Base URL for the Task API
 
-  // what determines the structure of a request and response?
-  // I want to pass the pagination model to the backend when fetching tasks
   getTasks(pagination: PaginationModel): Observable<PagedResultModel<Task>> {
     return this.http.post<PagedResultModel<Task>>(`${this.baseUrl}/GetTasks`, pagination);
   }
-
-  // If needed in future
-  //   getTask(id: string): Observable<Task> {
-  //     return this.http.get<Task>(`${this.baseUrl}/api/GetTasks/${id}`);
-  //   }
 
   createTask(task: Omit<Task, 'id'>): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/CreateTask`, task);
