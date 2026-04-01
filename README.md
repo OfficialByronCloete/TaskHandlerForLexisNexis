@@ -1,4 +1,4 @@
-# TaskHandler For LexisNexis
+# TaskHandler
 
 A full-stack task management system built with a **.NET Web API** backend and an **Angular** frontend.
 
@@ -7,7 +7,7 @@ A full-stack task management system built with a **.NET Web API** backend and an
 ## 📂 Project Structure
 
 ```text
-/TaskHandlerForLexisNexis
+/TaskHandler
 ├── /backend
 │   └── /TaskHandlerAPI
 │       └── /TaskHandlerAPI
